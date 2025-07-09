@@ -10,7 +10,7 @@ const Navbar = () => {
         <NavLink
           to="/"
           className="text-white hover:text-[#faba22] transition-colors px-3 py-2 text-lg rounded-md"
-          activeClassName="active"
+          
         >
           Home
         </NavLink>
@@ -19,7 +19,7 @@ const Navbar = () => {
         <NavLink
           to="/trainers"
           className="text-white hover:text-[#faba22] transition-colors px-3 py-2 text-lg rounded-md"
-          activeClassName="active"
+          
         >
           Trainers
         </NavLink>
@@ -28,7 +28,7 @@ const Navbar = () => {
         <NavLink
           to="/classes"
           className="text-white hover:text-[#faba22] transition-colors px-3 py-2 text-lg rounded-md"
-          activeClassName="active"
+          
         >
           Classes
         </NavLink>
@@ -37,7 +37,7 @@ const Navbar = () => {
         <NavLink
           to="/forum"
           className="text-white hover:text-[#faba22] transition-colors px-3 py-2 text-lg rounded-md"
-          activeClassName="active"
+          
         >
           Forum
         </NavLink>

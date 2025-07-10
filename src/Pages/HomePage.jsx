@@ -1,9 +1,13 @@
 import React from 'react';
+import BannerSection from '../Components/HomePageComponents/BannerSection';
+import FeatureSection from '../Components/HomePageComponents/FeatureSection';
 
 const HomePage = () => {
     return (
-        <div className='pt-20 bg-red-500'>
-            <h1 className='text-5xl text-white font-inter'>This is homepage</h1>
+        <div className=' '>
+         
+            <BannerSection></BannerSection>
+            <FeatureSection></FeatureSection>
         </div>
     );
 };

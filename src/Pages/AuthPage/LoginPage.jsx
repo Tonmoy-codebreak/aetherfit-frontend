@@ -1,15 +1,88 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router"; 
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "../../AuthProvider/useAuth";
+import Swal from "sweetalert2";
+
+
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const { signinUser, signWithGoogle } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt:", { username, password });
-    alert("Login functionality not implemented. Check console.");
+    setError(null);
+    try {
+      const result = await signinUser(email, password);
+      console.log(result)
+      // Sweeeeet Aleeeert
+      Swal.fire({
+    title: '<span style="color:#faba22">Login Successful!</span>',
+    text: 'Welcome back to AetherFit!',
+    icon: 'success',
+    background: 'black',
+    color: '#faba22',
+    confirmButtonColor: '#faba22',
+    confirmButtonText: 'Continue',
+    customClass: {
+    popup: 'rounded-4xl p-6',
+    title: 'text-2xl font-bold',
+    confirmButton: 'text-black font-semibold',
+  },
+  didOpen: (popup) => {
+    popup.setAttribute('draggable', 'true'); 
+  }
+      });
+      navigate(location.state?.from?.pathname || "/");
+    } catch (err) {
+      Swal.fire({
+  icon: "error",
+  title: "Sign In failed",
+  text: `${err.message}`,
+  
+});
+      setError(err.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    try {
+      const result = await signWithGoogle();
+          const user = result.user;
+      // Sweeeeet Aleeeert
+      Swal.fire({
+    title: '<span style="color:#faba22">Google Login Successful!</span>',
+    text: 'Welcome back to AetherFit!',
+    icon: 'success',
+    background: 'black',
+    color: '#faba22',
+    confirmButtonColor: '#faba22',
+    confirmButtonText: 'Continue',
+    customClass: {
+    popup: 'rounded-4xl p-6',
+    title: 'text-2xl font-bold',
+    confirmButton: 'text-black font-semibold',
+  },
+  didOpen: (popup) => {
+    popup.setAttribute('draggable', 'true'); 
+  }
+      });
+      navigate(location.state?.from?.pathname || "/");
+    } catch (err) {
+       Swal.fire({
+  icon: "error",
+  title: "Sign In failed",
+  text: `${err.message}`,
+  
+});
+      setError(err.message);
+    }
   };
 
   return (
@@ -23,37 +96,36 @@ const LoginPage = () => {
         {/* Google Sign In */}
         <button
           type="button"
+          onClick={handleGoogleSignIn}
           className="w-full flex items-center justify-center gap-3 border border-gray-700 rounded-md py-3 hover:bg-[#faba22] hover:text-black transition-colors font-semibold text-white"
         >
           <FcGoogle className="text-xl" />
           Sign in with Google
         </button>
 
+        
+
         {/* Form */}
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Username */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
-              required
-            />
-          </div>
+          {/* Email */}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
+            required
+          />
 
           {/* Password */}
-          <div className="relative">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
-              required
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
+            required
+          />
 
           {/* Submit */}
           <button

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { FcGoogle } from "react-icons/fc";
-import { useAuth } from "../../AuthProvider/useAuth"; 
-
-
+import { useAuth } from "../../AuthProvider/useAuth";
+import { updateProfile } from "firebase/auth"; 
+import Swal from "sweetalert2";
 
 const RegisterPage = () => {
   const { createUser, signWithGoogle } = useAuth();
@@ -14,7 +14,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState(null);
   const handleImageChange = (e) => {
     setImageFile(e.target.files[0]);
   };
@@ -45,33 +45,80 @@ const RegisterPage = () => {
       const imageUrl = data.data.display_url;
 
       // 2. Create user with email and password
-      await createUser(email, password);
+      const userCredential = await createUser(email, password);
+      const user = userCredential.user;
 
-      // 3. Here you can update profile with fullName and imageUrl (if you want, using updateProfile from firebase/auth)
+      // 3. Update display name and photo
+      await updateProfile(user, {
+        displayName: fullName,
+        photoURL: imageUrl,
+      });
 
-      alert("Account created successfully!");
-      navigate("/auth/login");
+     
+      // Sweeeeet Aleeeert
+            Swal.fire({
+          title: '<span style="color:#faba22">Account created successfully!</span>',
+          text: 'Welcome back to AetherFit!',
+          icon: 'success',
+          background: 'black',
+          color: '#faba22',
+          confirmButtonColor: '#faba22',
+          confirmButtonText: 'Continue',
+          customClass: {
+          popup: 'rounded-4xl p-6',
+          title: 'text-2xl font-bold',
+          confirmButton: 'text-black font-semibold',
+        },
+        didOpen: (popup) => {
+          popup.setAttribute('draggable', 'true'); 
+        }
+            });
+
+
+      navigate(location.state?.from?.pathname || "/");
     } catch (error) {
-      console.error(error);
-      alert("Registration failed: " + error.message);
+      
+      
+       Swal.fire({
+        icon: "error",
+        title: "Registration failed",
+        text: `${error.message}`,
+        
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await signWithGoogle();
-      alert("Logged in with Google successfully!");
-      navigate("/"); // or your desired page after login
-    } catch (error) {
-      console.error(error);
-      alert("Google Sign-in failed: " + error.message);
-    } finally {
-      setLoading(false);
+    const handleGoogleSignIn = async () => {
+      setError(null);
+      try {
+        const result = await signWithGoogle();
+            const user = result.user;
+        // Sweeeeet Aleeeert
+        Swal.fire({
+      title: '<span style="color:#faba22">Google Login Successful!</span>',
+      text: 'Welcome back to AetherFit!',
+      icon: 'success',
+      background: 'black',
+      color: '#faba22',
+      confirmButtonColor: '#faba22',
+      confirmButtonText: 'Continue',
+      customClass: {
+      popup: 'rounded-4xl p-6',
+      title: 'text-2xl font-bold',
+      confirmButton: 'text-black font-semibold',
+    },
+    didOpen: (popup) => {
+      popup.setAttribute('draggable', 'true'); 
     }
-  };
+        });
+        navigate(location.state?.from?.pathname || "/");
+      } catch (err) {
+        console.error("Google Sign-In Error:", err);
+        setError(err.message);
+      }
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-[#111] text-white font-inter px-4">
@@ -98,7 +145,6 @@ const RegisterPage = () => {
 
         {/* Registration Form */}
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Full Name */}
           <input
             type="text"
             placeholder="Full Name"
@@ -107,8 +153,6 @@ const RegisterPage = () => {
             className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
             required
           />
-
-          {/* Email */}
           <input
             type="email"
             placeholder="Email"
@@ -117,8 +161,6 @@ const RegisterPage = () => {
             className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
             required
           />
-
-          {/* Password */}
           <input
             type="password"
             placeholder="Password"
@@ -127,8 +169,6 @@ const RegisterPage = () => {
             className="w-full px-4 py-3 rounded-md border border-gray-700 bg-[#111] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#faba22]"
             required
           />
-
-          {/* Profile Image Upload */}
           <input
             type="file"
             accept="image/*"
@@ -137,7 +177,6 @@ const RegisterPage = () => {
             required
           />
 
-          {/* Create Account */}
           <button
             type="submit"
             disabled={loading}
@@ -147,14 +186,13 @@ const RegisterPage = () => {
           </button>
         </form>
 
-        {/* Log In Link */}
         <p className="text-center text-sm text-gray-400">
           Already have an account?{" "}
           <Link
             to="/auth/login"
             className="text-[#faba22] hover:underline font-medium"
           >
-            Log In
+            Sign In
           </Link>
         </p>
       </div>

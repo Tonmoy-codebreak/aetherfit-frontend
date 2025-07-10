@@ -5,6 +5,10 @@ import HomePage from "../Pages/HomePage";
 import AuthLayout from "../Layouts/AuthLayout";
 import LoginPage from "../Pages/AuthPage/LoginPage";
 import RegisterPage from "../Pages/AuthPage/RegisterPage";
+import DashboardLayout from "../Layouts/DashboardLayout";
+import Dashboard from "../Pages/Dashboard";
+import PrivateRoute from "./PrivateRoute";
+import ProfilePage from "../Pages/ProfilePage";
 
 const router = createBrowserRouter([
   {
@@ -15,8 +19,13 @@ const router = createBrowserRouter([
         path: "/",
         element: <HomePage />,
       },
+      {
+        path: "/profile",
+        element: <ProfilePage></ProfilePage>,
+      }
     ],
   },
+  // -----------------------------------------
   {
     path: "/auth",
     element: <AuthLayout />,
@@ -30,6 +39,18 @@ const router = createBrowserRouter([
         element: <RegisterPage />,
       },
     ],
+  },
+  // -------------------------------------------
+  {
+    path: "/dashboard",
+    element: <DashboardLayout></DashboardLayout>,
+    children: [
+      {
+        index:"true",
+        element: <PrivateRoute><Dashboard></Dashboard></PrivateRoute>
+        
+      }
+    ]
   },
 ]);
 

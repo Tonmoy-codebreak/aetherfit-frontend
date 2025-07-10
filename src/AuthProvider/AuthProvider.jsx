@@ -40,11 +40,20 @@ const AuthProvider = ({ children }) => {
   };
 
 //  Google sign in ================================================================= --------
-  const signWithGoogle = () => {
-    setLoading(true);
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
-  };
+ const signWithGoogle = async () => {
+  setLoading(true);
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    setUser(result.user); 
+    setLoading(false);
+    return result.user;
+  } catch (error) {
+    setLoading(false);
+    throw error;
+  }
+};
+
 
   
 //   Log out user ==================================================================

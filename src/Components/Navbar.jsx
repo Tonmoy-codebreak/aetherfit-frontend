@@ -50,6 +50,13 @@ const Navbar = () => {
           </NavLink>
         </li>
       )}
+       {user && (
+        <li>
+          <NavLink to="/profile" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
+            Profile
+          </NavLink>
+        </li>
+      )}
     </>
   );
 

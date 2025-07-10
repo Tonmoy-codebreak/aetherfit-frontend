@@ -9,6 +9,7 @@ import DashboardLayout from "../Layouts/DashboardLayout";
 import Dashboard from "../Pages/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import ProfilePage from "../Pages/ProfilePage";
+import ClassesPage from "../Pages/ClassesPage";
 
 const router = createBrowserRouter([
   {
@@ -22,7 +23,11 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: <PrivateRoute><ProfilePage /></PrivateRoute>,
-      }
+      },
+      {
+        path: "/classes",
+        element: <ClassesPage></ClassesPage>,
+      },
     ],
   },
   // -----------------------------------------

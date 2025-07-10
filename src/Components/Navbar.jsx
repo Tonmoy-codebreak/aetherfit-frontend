@@ -1,19 +1,18 @@
 import React, { useState } from "react";
 import { Link, NavLink } from "react-router";
 import { RxDashboard } from "react-icons/rx";
+import { FiLogOut } from "react-icons/fi";
 import { useAuth } from "../AuthProvider/useAuth";
 import Swal from "sweetalert2";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   const { user, logoutUser } = useAuth();
 
   const handleLogout = async () => {
     try {
       await logoutUser();
-      setIsProfileDropdownOpen(false);
       Swal.fire("Successfully logged out");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -44,18 +43,18 @@ const Navbar = () => {
         </NavLink>
       </li>
       {user && (
-        <li>
-          <NavLink to="/dashboard" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
-            Dashboard
-          </NavLink>
-        </li>
-      )}
-       {user && (
-        <li>
-          <NavLink to="/profile" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
-            Profile
-          </NavLink>
-        </li>
+        <>
+          <li>
+            <NavLink to="/dashboard" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
+              Dashboard
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/profile" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
+              Profile
+            </NavLink>
+          </li>
+        </>
       )}
     </>
   );
@@ -75,7 +74,7 @@ const Navbar = () => {
             <span className="text-2xl font-bold text-white">AetherFit</span>
           </div>
 
-          {/* Nav Options + Profile */}
+          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center space-x-5">
             <ul className="flex items-center space-x-5">{navOption}</ul>
 
@@ -90,49 +89,22 @@ const Navbar = () => {
                   <RxDashboard className="text-2xl" />
                 </Link>
 
-                {/* Profile Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                    className="flex items-center space-x-2"
-                  >
-                    <img
-                      src={user.photoURL || "https://placehold.co/40x40/666666/FFFFFF?text=U"}
-                      alt={user.displayName || "User"}
-                      title={user.displayName}
-                      className="w-10 h-10 rounded-full border-2 border-[#faba22] object-cover"
-                    />
-                    {/* <span className="text-white text-sm font-medium hidden sm:block">
-                      {user.displayName || "User"}
-                    </span> */}
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                {/* Profile Picture */}
+                <img
+                  src={user.photoURL || "https://placehold.co/40x40/666666/FFFFFF?text=U"}
+                  alt={user.displayName || "User"}
+                  title={user.displayName}
+                  className="w-10 h-10 rounded-full border-2 border-[#faba22] object-cover"
+                />
 
-                  {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-[#111] rounded-md shadow-lg py-1 z-50 border border-gray-700">
-                      <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
-                        <div className="font-medium text-white">{user.displayName || "User"}</div>
-                        <div className="text-gray-400 lg:hidden">{user.email}</div>
-                      </div>
-                      <Link
-                        to="/dashboard/profile"
-                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition duration-300"
+                >
+                  <FiLogOut className="text-xm" />
+                  
+                </button>
               </div>
             ) : (
               <Link
@@ -151,12 +123,7 @@ const Navbar = () => {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-white hover:text-[#faba22] focus:outline-none"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -174,19 +141,16 @@ const Navbar = () => {
             <ul className="space-y-2">{navOption}</ul>
             {user ? (
               <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={user.photoURL || "https://placehold.co/40x40/666666/FFFFFF?text=U"}
-                      alt={user.displayName || "User"}
-                      className="w-10 h-10 rounded-full border-2 border-[#faba22] object-cover"
-                    />
-                    <div>
-                      <div className="text-white font-medium">{user.displayName || "User"}</div>
-                      <div className="text-gray-400 text-sm">{user.email}</div>
-                    </div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <img
+                    src={user.photoURL || "https://placehold.co/40x40/666666/FFFFFF?text=U"}
+                    alt={user.displayName || "User"}
+                    className="w-10 h-10 rounded-full border-2 border-[#faba22] object-cover"
+                  />
+                  <div>
+                    <div className="text-white font-medium">{user.displayName || "User"}</div>
+                    <div className="text-gray-400 text-sm">{user.email}</div>
                   </div>
-                  
                 </div>
                 <Link
                   to="/dashboard/profile"
@@ -200,8 +164,9 @@ const Navbar = () => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md w-full text-left"
                 >
+                  <FiLogOut className="text-lg" />
                   Logout
                 </button>
               </div>

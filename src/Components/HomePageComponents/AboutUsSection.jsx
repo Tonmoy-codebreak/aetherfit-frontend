@@ -10,24 +10,23 @@ const AboutUsSection = () => {
       }}
     >
       <div className="bg-black/80 w-full h-full">
-        <div className="max-w-6xl mx-auto px-6 py-20 md:py-32 flex flex-col md:flex-row gap-12">
-          
-          {/* Left: About Us */}
-          <div className="md:w-1/2 flex flex-col justify-center">
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-32 flex flex-col gap-12">
+          {/* Top: About Us */}
+          <div className="text-center">
             <h2 className="text-4xl md:text-5xl font-bold font-funnel mb-6 text-[#faba22]">
               About Us
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-lg">
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
               AetherFit bridges the gap between those seeking fitness guidance and those ready to share it. 
               Our platform empowers users to grow as trainers or find expert advice through a community-driven 
               ecosystem. Whether you’re offering workout plans, booking sessions, or seeking help on your fitness journey, 
               AetherFit connects you with the right people and tools to move forward.
             </p>
           </div>
-          
-          {/* Right: Why We Exist & What Makes Us Different */}
-          <div className="md:w-1/2 flex flex-col gap-10">
-            <div className="bg-black/40 p-6 rounded-lg shadow-lg">
+
+          {/* Bottom: Three Cards */}
+          <div className="grid md:grid-cols-3 gap-10">
+            <div className="bg-black/40 hover:bg-black  p-6 rounded-lg shadow-lg">
               <h3 className="text-2xl font-semibold mb-3 text-[#faba22] font-funnel">
                 Why We Exist
               </h3>
@@ -38,19 +37,29 @@ const AboutUsSection = () => {
                 for advice, workouts, support, and progress tracking.
               </p>
             </div>
-            <div className="bg-black/40 p-6 rounded-lg shadow-lg">
+            <div className="bg-black/40 hover:bg-black p-6 rounded-lg shadow-lg">
               <h3 className="text-2xl font-semibold mb-3 text-[#faba22] font-funnel">
                 What Makes Us Different
               </h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-400 md:text-sm leading-relaxed">
                 AetherFit isn’t just about solo progress — it’s about building a network. 
                 Any user can become a certified trainer, helping others while growing their own profile. 
                 This two-way ecosystem creates opportunities, motivation, and personalized support that 
                 regular fitness apps simply don’t offer.
               </p>
             </div>
+            <div className="bg-black/40 hover:bg-black p-6 rounded-lg shadow-lg">
+              <h3 className="text-2xl font-semibold mb-3 text-[#faba22] font-funnel">
+                Our Mission
+              </h3>
+              <p className="text-gray-400 leading-relaxed">
+                We aim to democratize fitness education and access. 
+                By allowing anyone to share knowledge, learn from professionals, 
+                and access tailored resources, we help people take control of their 
+                fitness journey with confidence and support.
+              </p>
+            </div>
           </div>
-          
         </div>
       </div>
     </section>

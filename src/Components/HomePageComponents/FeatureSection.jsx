@@ -45,8 +45,8 @@ const features = [
 const FeatureSection = () => {
   return (
     <section className="bg-black py-16 font-funnel relative overflow-hidden">
-      {/* Background radial gradient for subtle depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black opacity-70"></div>
+     
+      <div className="absolute inset-0 bg-[#090909]"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Section Header */}

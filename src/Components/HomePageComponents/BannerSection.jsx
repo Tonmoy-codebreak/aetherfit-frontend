@@ -101,7 +101,7 @@ const BannerSection = () => {
               {/* Description */}
               <div className="max-w-xl md:max-w-2xl mx-auto">
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed font-light px-2 md:px-0">
-                  AetherFit merges smart programs and <br className='md:block' /> expert coaching to help you stay fit, focused <br className='md:block' /> and fulfilled — all in one place.
+                  AetherFit merges smart programs and <br className='md:block lg:hidden' /> expert coaching to help you stay fit, focused <br className='md:block lg:hidden' /> and fulfilled — all in one place.
                 </p>
               </div>
 
@@ -109,7 +109,7 @@ const BannerSection = () => {
               <div className="pt-4 md:pt-6">
                 <Link
                   to="/classes"
-                  className="group inline-flex items-center gap-2 md:gap-4 bg-[#faba22] text-black px-5 md:px-7 py-2 md:py-3 rounded-full font-bold text-sm md:text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-[#faba22]/40"
+                  className="group inline-flex items-center gap-2 md:gap-4 bg-[#faba22] text-black px-5 md:px-7 py-2 md:py-3 rounded-full font-bold text-sm lg:text-lg font-funnel transition-all duration-100 "
                 >
                   Browse Modules
                   <div className="w-6 md:w-8 h-6 md:h-8 bg-black/20 rounded-full flex items-center justify-center transition-transform group-hover:rotate-45">

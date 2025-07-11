@@ -10,6 +10,8 @@ import Dashboard from "../Pages/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import ProfilePage from "../Pages/ProfilePage";
 import ClassesPage from "../Pages/ClassesPage";
+import TrainersPage from "../Pages/TrainersPage"
+import ForumPage from "../Pages/ForumPage";
 
 const router = createBrowserRouter([
   {
@@ -27,6 +29,14 @@ const router = createBrowserRouter([
       {
         path: "/classes",
         element: <ClassesPage></ClassesPage>,
+      },
+      {
+        path: "/trainers",
+        element: <TrainersPage></TrainersPage>,
+      },
+      {
+        path: "/forum",
+        element: <ForumPage></ForumPage>
       },
     ],
   },

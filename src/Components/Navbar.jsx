@@ -44,11 +44,11 @@ const Navbar = () => {
       </li>
       {user && (
         <>
-          <li>
+          {/* <li>
             <NavLink to="/dashboard" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
               Dashboard
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink to="/profile" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
               Profile

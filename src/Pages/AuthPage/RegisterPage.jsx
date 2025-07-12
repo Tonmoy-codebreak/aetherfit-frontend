@@ -97,7 +97,7 @@ const RegisterPage = () => {
       // Success alert
       Swal.fire({
         title: '<span style="color:#faba22">Account created successfully!</span>',
-        text: "Welcome back to AetherFit!",
+        text: "Welcome to AetherFit!",
         icon: "success",
         background: "black",
         color: "#faba22",

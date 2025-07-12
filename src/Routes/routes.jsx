@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router"; 
+import { createBrowserRouter } from "react-router";
 
 import MainLayout from "../Layouts/MainLayout";
 import HomePage from "../Pages/HomePage";
@@ -10,8 +10,12 @@ import Dashboard from "../Pages/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import ProfilePage from "../Pages/ProfilePage";
 import ClassesPage from "../Pages/ClassesPage";
-import TrainersPage from "../Pages/TrainersPage"
+import TrainersPage from "../Pages/TrainersPage";
+
 import ForumPage from "../Pages/ForumPage";
+import TrainerDetailsPage from "../Pages/TrainerDetailsPage";
+import TrainerBookingPage from "../Pages/TrainerBookingPage";
+import PaymentPage from "../Pages/PaymentPage";
 
 const router = createBrowserRouter([
   {
@@ -24,23 +28,41 @@ const router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: <PrivateRoute><ProfilePage /></PrivateRoute>,
+        element: (
+          <PrivateRoute>
+            <ProfilePage />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/classes",
-        element: <ClassesPage></ClassesPage>,
+        element: <ClassesPage />,
       },
       {
         path: "/trainers",
-        element: <TrainersPage></TrainersPage>,
+        element: <TrainersPage />,
+      },
+      {
+        path: "/trainers/:id",
+        element: <TrainerDetailsPage />,
+      },
+      {
+          
+        path: "/booking/:trainerId/:day/:time",
+        element: <TrainerBookingPage></TrainerBookingPage>
+      
+      },
+      {
+        path: "/payment",
+        element: <PaymentPage></PaymentPage>
       },
       {
         path: "/forum",
-        element: <ForumPage></ForumPage>
+        element: <ForumPage />,
       },
     ],
   },
-  // -----------------------------------------
+  // Auth routes
   {
     path: "/auth",
     element: <AuthLayout />,
@@ -55,17 +77,20 @@ const router = createBrowserRouter([
       },
     ],
   },
-  // -------------------------------------------
+  // Dashboard routes
   {
     path: "/dashboard",
-    element: <DashboardLayout></DashboardLayout>,
+    element: <DashboardLayout />,
     children: [
       {
-        index:"true",
-        element: <PrivateRoute><Dashboard></Dashboard></PrivateRoute>
-        
-      }
-    ]
+        index: true,
+        element: (
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        ),
+      },
+    ],
   },
 ]);
 

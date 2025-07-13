@@ -1,53 +1,48 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
+// Constants
 const CLASSES_PER_PAGE = 6;
 
+// Fetch function
+const fetchClasses = async (page) => {
+  const res = await axios.get(
+    `${import.meta.env.VITE_API_URL}/classes?page=${page}&limit=${CLASSES_PER_PAGE}`
+  );
+  return res.data;
+};
+
 const AllClassesPage = () => {
-  const [classes, setClasses] = useState([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Fetch classes from backend with pagination
-  useEffect(() => {
-    const fetchClasses = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/classes?page=${page}&limit=${CLASSES_PER_PAGE}`
-        );
-        setClasses(res.data.classes || []);
-        setTotalPages(res.data.totalPages || 1);
-      } catch (err) {
-        setError("Failed to load classes");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClasses();
-  }, [page]);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["classes", page],
+    queryFn: () => fetchClasses(page),
+    keepPreviousData: true,
+  });
 
   const goToPage = (p) => {
-    if (p >= 1 && p <= totalPages) {
+    if (p >= 1 && p <= (data?.totalPages || 1)) {
       setPage(p);
     }
   };
 
-  if (loading)
+  if (isLoading)
     return <p className="text-center mt-20 text-yellow-400">Loading classes...</p>;
 
-  if (error)
-    return <p className="text-center mt-20 text-red-600">{error}</p>;
+  if (isError)
+    return <p className="text-center mt-20 text-red-600">Failed to load classes</p>;
 
-  if (classes.length === 0)
+  if (!data?.classes?.length)
     return <p className="text-center mt-20">No classes available.</p>;
-//--------------------------------------------------------------------------------------------------- 
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-4xl font-bold mb-8 text-[#faba22] text-center">
@@ -55,7 +50,7 @@ const AllClassesPage = () => {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {classes.map((cls) => (
+        {data.classes.map((cls) => (
           <div
             key={cls._id}
             className="bg-black rounded-md p-4 shadow-lg text-white"
@@ -80,7 +75,6 @@ const AllClassesPage = () => {
                       title={trainer.name}
                       className="block w-16 h-16 rounded-full overflow-hidden border-2 border-[#faba22] hover:border-yellow-400 transition"
                     >
-                        
                       <img
                         src={trainer.photoURL || "/default-avatar.png"}
                         alt={trainer.name}
@@ -107,7 +101,7 @@ const AllClassesPage = () => {
           Prev
         </button>
 
-        {[...Array(totalPages)].map((_, idx) => {
+        {[...Array(data.totalPages)].map((_, idx) => {
           const p = idx + 1;
           return (
             <button
@@ -126,7 +120,7 @@ const AllClassesPage = () => {
 
         <button
           onClick={() => goToPage(page + 1)}
-          disabled={page === totalPages}
+          disabled={page === data.totalPages}
           className="px-4 py-2 bg-[#faba22] text-black font-semibold rounded disabled:opacity-50"
         >
           Next

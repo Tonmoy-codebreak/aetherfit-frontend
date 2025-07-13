@@ -37,9 +37,7 @@ const TrainerDetailsPage = () => {
   if (loading)
     return (
       <div className="text-center">
-        <div
-          className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-yellow-500 my-auto mx-auto"
-        ></div>
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-yellow-500 my-auto mx-auto"></div>
         <h2 className="text-zinc-900 dark:text-white mt-4">Loading...</h2>
         <p className="text-zinc-600 dark:text-zinc-400">
           Your adventure is about to begin
@@ -149,7 +147,6 @@ const TrainerDetailsPage = () => {
               <button
                 key={idx}
                 onClick={() => {
-                  // Redirect to booking page with params, adjust path as needed
                   navigate(`/booking/${id}/${day}/${encodeURIComponent(time)}`);
                 }}
                 className="px-5 py-2 rounded font-semibold"
@@ -160,6 +157,18 @@ const TrainerDetailsPage = () => {
                 {day} {time}
               </button>
             ))}
+          </div>
+
+          {/* Be A Trainer Section */}
+          <div className="mt-12 text-center">
+            <h2 className="text-2xl font-semibold mb-4">Want to Help Others?</h2>
+            <p className="mb-6 opacity-80">Join as a certified trainer and share your expertise with the community.</p>
+            <button
+              onClick={() => navigate("/betrainer")}
+              className="px-6 py-3 rounded-lg font-bold bg-[#faba22] text-black hover:bg-black hover:text-[#faba22] transition"
+            >
+              Become a Trainer
+            </button>
           </div>
         </div>
       </div>

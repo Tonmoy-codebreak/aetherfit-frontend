@@ -17,6 +17,7 @@ import TrainerDetailsPage from "../Pages/TrainerDetailsPage";
 import TrainerBookingPage from "../Pages/TrainerBookingPage";
 import PaymentPage from "../Pages/PaymentPage";
 import AllClassesPage from "../Pages/AllClassesPage";
+import BeTrainerPage from "../Pages/BeTrainerPage";
 
 const router = createBrowserRouter([
   {
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
       {
         path: "/trainers/:id",
         element: <TrainerDetailsPage />,
+      },
+      {
+        path: "/betrainer",
+        element: <BeTrainerPage></BeTrainerPage>
       },
       {
           

@@ -9,13 +9,14 @@ import DashboardLayout from "../Layouts/DashboardLayout";
 import Dashboard from "../Pages/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import ProfilePage from "../Pages/ProfilePage";
-import ClassesPage from "../Pages/ClassesPage";
+
 import TrainersPage from "../Pages/TrainersPage";
 
 import ForumPage from "../Pages/ForumPage";
 import TrainerDetailsPage from "../Pages/TrainerDetailsPage";
 import TrainerBookingPage from "../Pages/TrainerBookingPage";
 import PaymentPage from "../Pages/PaymentPage";
+import AllClassesPage from "../Pages/AllClassesPage";
 
 const router = createBrowserRouter([
   {
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/classes",
-        element: <ClassesPage />,
+        element: <AllClassesPage></AllClassesPage>,
       },
       {
         path: "/trainers",

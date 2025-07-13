@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { FaFacebookF, FaTwitter, FaLinkedin } from "react-icons/fa";
+import { FaFacebookF, FaTwitter, FaLinkedin, FaInstagram } from "react-icons/fa";
 import { Link } from "react-router"; 
 
 const fetchTrainers = async () => {
@@ -71,9 +71,10 @@ const AllTrainersPage = () => {
             _id,
             photoURL = "https://via.placeholder.com/400x300?text=No+Image",
             name = "Unnamed Trainer",
-            expertise = [], // Changed to array for consistency
+            expertise = [], 
             yearsOfExperience = "N/A",
-            social = {},
+            sociallinks = {},
+            email= {},
             availableSlots = [],
           } = trainer || {};
 
@@ -95,26 +96,22 @@ const AllTrainersPage = () => {
                 {Array.isArray(expertise) && expertise.length > 0 ? expertise.join(', ') : "Expertise info not available"}
               </p>
               <p className="mb-3"><strong>Experience:</strong> {yearsOfExperience} years</p>
-
+              
               <div className="flex gap-3 mb-4">
-                {social.facebook && (
+                {sociallinks.facebook && (
                   <a href={social.facebook} target="_blank" rel="noreferrer" className="hover:opacity-75 transition" style={{ color: "#faba22" }}>
                     <FaFacebookF size={20} />
                   </a>
                 )}
-                {social.twitter && (
+                {sociallinks.instagram && (
                   <a href={social.twitter} target="_blank" rel="noreferrer" className="hover:opacity-75 transition" style={{ color: "#faba22" }}>
-                    <FaTwitter size={20} />
+                    <FaInstagram size={20} />
                   </a>
                 )}
-                {social.linkedin && (
-                  <a href={social.linkedin} target="_blank" rel="noreferrer" className="hover:opacity-75 transition" style={{ color: "#faba22" }}>
-                    <FaLinkedin size={20} />
-                  </a>
-                )}
-                {!social.facebook && !social.twitter && !social.linkedin && (
+{/*                 
+                {!sociallinks.facebook && !sociallinks.instagram && (
                   <span style={{ opacity: 0.5, fontStyle: "italic" }}>No social links available</span>
-                )}
+                )} */}
               </div>
 
               <div className="mb-4 flex flex-wrap gap-2">

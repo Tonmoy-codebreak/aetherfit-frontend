@@ -61,41 +61,44 @@ const TrainerBookingPage = () => {
     fetchTrainer();
   }, [trainerId]);
 
+  const selectedSlot = trainer?.availableSlots?.find(
+    (slot) => slot.day === day && slot.time === decodeURIComponent(time)
+  );
+
+  const selectedClassName = selectedSlot?.className || "No Class Assigned";
+
   const handleJoinNow = () => {
     if (!selectedPackage) {
       alert("Please select a membership package.");
       return;
     }
-    navigate("/payment", {
-  state: {
-    trainerId,
-    trainerName: trainer?.name,
-    slotName: `${day} ${decodeURIComponent(time)}`,
-    packageId: selectedPackage.id,
-    packageName: selectedPackage.name,
-    packagePrice: selectedPackage.price,
-    userInfo: {
-      name: "Fetch from context/auth",
-      email: "Fetch from context/auth",
-      phone: "Optional",
-    },
-  },
-});
 
+    navigate("/payment", {
+      state: {
+        trainerId,
+        trainerName: trainer?.name,
+        slotName: `${day} ${decodeURIComponent(time)}`,
+        className: selectedClassName,
+        packageId: selectedPackage.id,
+        packageName: selectedPackage.name,
+        packagePrice: selectedPackage.price,
+        userInfo: {
+          name: "Fetch from context/auth",
+          email: "Fetch from context/auth",
+          phone: "Optional",
+        },
+      },
+    });
   };
 
   if (loading)
-    return (
-      <p className="text-yellow-400 font-semibold text-center mt-20">Loading trainer info...</p>
-    );
+    return <p className="text-yellow-400 font-semibold text-center mt-20">Loading trainer info...</p>;
+
   if (error)
-    return (
-      <p className="text-red-600 font-semibold text-center mt-20">{error}</p>
-    );
+    return <p className="text-red-600 font-semibold text-center mt-20">{error}</p>;
+
   if (!trainer)
-    return (
-      <p className="text-yellow-400 font-semibold text-center mt-20">Trainer not found.</p>
-    );
+    return <p className="text-yellow-400 font-semibold text-center mt-20">Trainer not found.</p>;
 
   return (
     <div className="max-w-lg mx-auto mt-20 p-6 bg-black rounded-md font-sans">
@@ -105,10 +108,12 @@ const TrainerBookingPage = () => {
 
       <p className="text-white mb-4">
         <span className="font-semibold text-[#faba22]">Selected Slot:</span> {day} {decodeURIComponent(time)}
+        <br />
+        <span className="font-semibold text-[#faba22]">Class:</span> {selectedClassName}
       </p>
-
+{/* 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-[#faba22] mb-3">Classes Offered</h2>
+
         <ul className="list-disc list-inside text-white">
           {trainer.classes && trainer.classes.length > 0 ? (
             trainer.classes.map((cls, i) => <li key={i}>{cls}</li>)
@@ -116,7 +121,7 @@ const TrainerBookingPage = () => {
             <li>General Fitness Training</li>
           )}
         </ul>
-      </div>
+      </div> */}
 
       <div>
         <h2 className="text-2xl font-semibold text-[#faba22] mb-4">Select Membership Package</h2>
@@ -124,12 +129,11 @@ const TrainerBookingPage = () => {
           {packages.map((pkg) => (
             <label
               key={pkg.id}
-              className={`block p-4 mb-4 rounded border cursor-pointer transition
-                ${
-                  selectedPackage?.id === pkg.id
-                    ? "border-[#faba22] bg-yellow-900"
-                    : "border-gray-600 hover:border-[#faba22]"
-                }`}
+              className={`block p-4 mb-4 rounded border cursor-pointer transition ${
+                selectedPackage?.id === pkg.id
+                  ? "border-[#faba22] bg-yellow-900"
+                  : "border-gray-600 hover:border-[#faba22]"
+              }`}
             >
               <input
                 type="radio"
@@ -154,8 +158,7 @@ const TrainerBookingPage = () => {
 
       <button
         onClick={handleJoinNow}
-        className="mt-8 w-full py-3 rounded bg-[#faba22] text-black font-bold text-lg
-          hover:bg-yellow-600 transition-colors"
+        className="mt-8 w-full py-3 rounded bg-[#faba22] text-black font-bold text-lg hover:bg-yellow-600 transition-colors"
       >
         Join Now
       </button>

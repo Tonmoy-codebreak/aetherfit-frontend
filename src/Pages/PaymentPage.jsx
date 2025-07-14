@@ -54,18 +54,19 @@ const CheckoutForm = () => {
       setMessage("Payment Successful!");
 
       try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
-          trainerId: paymentInfo.trainerId,
-          trainerName: paymentInfo.trainerName,
-          slotDay: paymentInfo.slotDay,
-          slotTime: paymentInfo.slotTime,
-          packageId: paymentInfo.packageId,
-          packageName: paymentInfo.packageName,
-          packagePrice: paymentInfo.packagePrice,
-          userName: user?.name || user?.displayName,
-          userEmail: user?.email,
-          paymentIntentId: paymentIntent.id,
-        });
+       await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
+            trainerId: paymentInfo.trainerId,
+            trainerName: paymentInfo.trainerName,
+            slotDay: paymentInfo.slotName.split(" ")[0],           // day (e.g., Mon)
+            slotTime: paymentInfo.slotName.split(" ").slice(1).join(" "), // time (e.g., 10:00 AM)
+            className: paymentInfo.className,
+            packageId: paymentInfo.packageId,
+            packageName: paymentInfo.packageName,
+            packagePrice: paymentInfo.packagePrice,
+            userName: user?.name || user?.displayName,
+            userEmail: user?.email,
+            paymentIntentId: paymentIntent.id,
+          });
 
         // navigate("/dashboard/booked-trainers");
       } catch (err) {

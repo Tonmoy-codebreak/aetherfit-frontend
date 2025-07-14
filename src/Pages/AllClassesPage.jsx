@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
+// Constants
 const CLASSES_PER_PAGE = 6;
 
-// Fetch function
+// Fetch function with page & search query
 const fetchClasses = async ({ page, search }) => {
-  const res = await axios.get(
+  const res = await fetch(
     `${import.meta.env.VITE_API_URL}/classes?page=${page}&limit=${CLASSES_PER_PAGE}&search=${search}`
   );
-  return res.data;
+  if (!res.ok) throw new Error("Failed to fetch classes");
+  return res.json();
 };
 
 const AllClassesPage = () => {
@@ -90,6 +91,7 @@ const AllClassesPage = () => {
 
                 <div>
                   <h3 className="font-semibold text-[#faba22] mb-2">Trainers</h3>
+
                   {cls.trainers && cls.trainers.length > 0 ? (
                     <div className="flex space-x-4">
                       {cls.trainers.map((trainer) => (

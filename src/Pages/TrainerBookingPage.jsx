@@ -72,23 +72,22 @@ const TrainerBookingPage = () => {
       alert("Please select a membership package.");
       return;
     }
-
-    navigate("/payment", {
-      state: {
-        trainerId,
-        trainerName: trainer?.name,
-        slotName: `${day} ${decodeURIComponent(time)}`,
-        className: selectedClassName,
-        packageId: selectedPackage.id,
-        packageName: selectedPackage.name,
-        packagePrice: selectedPackage.price,
-        userInfo: {
-          name: "Fetch from context/auth",
-          email: "Fetch from context/auth",
-          phone: "Optional",
-        },
-      },
-    });
+navigate("/payment", {
+  state: {
+    trainerId,
+    trainerName: trainer?.name,
+    slotName: `${day} ${decodeURIComponent(time)}`, // e.g. "Mon 10:00 AM"
+    className: selectedClassName,
+    packageId: selectedPackage.id,
+    packageName: selectedPackage.name,
+    packagePrice: selectedPackage.price,
+    userInfo: {
+      name: "Fetch from context/auth",
+      email: "Fetch from context/auth",
+      phone: "Optional",
+    },
+  },
+});
   };
 
   if (loading)
@@ -111,17 +110,7 @@ const TrainerBookingPage = () => {
         <br />
         <span className="font-semibold text-[#faba22]">Class:</span> {selectedClassName}
       </p>
-{/* 
-      <div className="mb-8">
 
-        <ul className="list-disc list-inside text-white">
-          {trainer.classes && trainer.classes.length > 0 ? (
-            trainer.classes.map((cls, i) => <li key={i}>{cls}</li>)
-          ) : (
-            <li>General Fitness Training</li>
-          )}
-        </ul>
-      </div> */}
 
       <div>
         <h2 className="text-2xl font-semibold text-[#faba22] mb-4">Select Membership Package</h2>

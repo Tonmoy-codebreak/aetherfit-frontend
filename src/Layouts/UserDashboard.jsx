@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, NavLink, Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
 
 const UserDashboard = () => {
   return (
@@ -9,7 +9,7 @@ const UserDashboard = () => {
         <h2 className="text-2xl font-bold mb-6">Member Dashboard</h2>
         <nav className="flex flex-col gap-4">
           <NavLink
-            to="/dashboard/member/profile"
+            to="profile"
             className={({ isActive }) =>
               isActive ? "font-semibold text-yellow-400" : "hover:text-yellow-400"
             }
@@ -17,7 +17,7 @@ const UserDashboard = () => {
             Profile
           </NavLink>
           <NavLink
-            to="/dashboard/member/activity-log"
+            to="activity-log"
             className={({ isActive }) =>
               isActive ? "font-semibold text-yellow-400" : "hover:text-yellow-400"
             }
@@ -25,7 +25,7 @@ const UserDashboard = () => {
             Activity Log
           </NavLink>
           <NavLink
-            to="/dashboard/member/booked-trainer"
+            to="booked-trainer"
             className={({ isActive }) =>
               isActive ? "font-semibold text-yellow-400" : "hover:text-yellow-400"
             }

@@ -26,7 +26,7 @@ const AllClassesPage = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setPage(1); // Reset to first page on new search
+    setPage(1);
     setSearch(searchInput.trim());
   };
 

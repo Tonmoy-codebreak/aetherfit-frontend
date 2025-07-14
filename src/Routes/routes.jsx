@@ -6,7 +6,6 @@ import AuthLayout from "../Layouts/AuthLayout";
 import LoginPage from "../Pages/AuthPage/LoginPage";
 import RegisterPage from "../Pages/AuthPage/RegisterPage";
 import DashboardLayout from "../Layouts/DashboardLayout";
-import Dashboard from "../Pages/Dashboard";
 import PrivateRoute from "./PrivateRoute";
 import ProfilePage from "../Pages/ProfilePage";
 
@@ -18,6 +17,11 @@ import TrainerBookingPage from "../Pages/TrainerBookingPage";
 import PaymentPage from "../Pages/PaymentPage";
 import AllClassesPage from "../Pages/AllClassesPage";
 import BeTrainerPage from "../Pages/BeTrainerPage";
+import UserDashboard from "../Layouts/UserDashboard";
+import TrainerDashboard from "../Layouts/TrainerDashboard";
+import AdminDashboard from "../Layouts/AdminDashboard";
+import ActivityLogPage from "../Pages/ActivityLogPage";
+import BookedTrainersPage from "../Pages/BookedTrainersPage";
 
 const router = createBrowserRouter([
   {
@@ -87,17 +91,29 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <DashboardLayout />,
-    children: [
-      {
-        index: true,
-        element: (
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        ),
-      },
-    ],
+   children: [
+    {
+       path: "member",
+      element: <UserDashboard></UserDashboard>,
+       children: [
+        { path: "profile", element: <ProfilePage></ProfilePage> },
+        { path: "activity-log", element: <ActivityLogPage></ActivityLogPage> },
+        { path: "booked-trainer", element: <BookedTrainersPage></BookedTrainersPage> },
+      ],
+    },
+    // Trainer Dashbaord
+     {
+       path: "trainer",
+      element: <TrainerDashboard></TrainerDashboard>
+    },
+    // Admin Dashboard
+    {
+       path: "admin",
+      element: <AdminDashboard></AdminDashboard>
+    },
+   ]
   },
+  
 ]);
 
 export default router;

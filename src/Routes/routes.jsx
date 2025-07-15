@@ -23,6 +23,14 @@ import AdminDashboard from "../Layouts/AdminDashboard";
 
 import ActivityLogPage from "../Pages/ActivityLogPage";
 import BookedTrainersPage from "../Pages/BookedTrainersPage";
+import Alltrainers from "../Pages/Admin Dashboard Pages/Alltrainers";
+import TrainerApplication from "../Pages/Admin Dashboard Pages/TrainerApplication";
+import TrainerApplicationDetails from "../Pages/Admin Dashboard Pages/TrainerApplicationDetails";
+import BalanceAdmin from "../Pages/Admin Dashboard Pages/BalanceAdmin";
+import AddNewClass from "../Pages/Admin Dashboard Pages/AddNewClass";
+import Subscriber from "../Pages/Admin Dashboard Pages/Subscriber";
+import AddForumAdmin from "../Pages/Admin Dashboard Pages/AddForumAdmin";
+import ForumPostDetails from "../Pages/ForumPostDetails";
 
 const router = createBrowserRouter([
   {
@@ -45,6 +53,7 @@ const router = createBrowserRouter([
       { path: "booking/:trainerId/:day/:time", element: <TrainerBookingPage /> },
       { path: "payment", element: <PaymentPage /> },
       { path: "forum", element: <ForumPage /> },
+      { path: "forum/:id", element:<ForumPostDetails></ForumPostDetails> }
     ],
   },
   {
@@ -63,7 +72,7 @@ const router = createBrowserRouter([
         path: "member",
         element: <UserDashboard />,
         children: [
-          { index: true, element: <ProfilePage /> },
+          { path: "profile", element: <ProfilePage /> },
           { path: "activity-log", element: <ActivityLogPage /> },
           { path: "booked-trainer", element: <BookedTrainersPage /> },
           
@@ -82,11 +91,15 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: <AdminDashboard />,
-        // Add admin dashboard children routes here if any,
-        // for example:
-        // children: [
-        //   { path: "all-newsletter", element: <AllNewsletterPage /> },
-        // ],
+        children: [
+          { path: "alltrainers", element: <Alltrainers></Alltrainers> },
+          {path:"appliedtrainers" , element: <TrainerApplication></TrainerApplication>},
+          { path: "appliedtrainers/:id", element: <TrainerApplicationDetails></TrainerApplicationDetails> },
+          {path:"balancelogs", element:<BalanceAdmin></BalanceAdmin>},
+          {path:"addnewclass" , element: <AddNewClass></AddNewClass>},
+          {path : "subscriber" , element: <Subscriber></Subscriber>},
+          {path : "addforum" , element: <AddForumAdmin></AddForumAdmin>}
+        ],
       },
     ],
   },

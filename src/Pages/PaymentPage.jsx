@@ -57,6 +57,7 @@ const CheckoutForm = () => {
        await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
             trainerId: paymentInfo.trainerId,
             trainerName: paymentInfo.trainerName,
+            trainerEmail: paymentInfo.trainerEmail,
             slotDay: paymentInfo.slotName.split(" ")[0],           // day (e.g., Mon)
             slotTime: paymentInfo.slotName.split(" ").slice(1).join(" "), // time (e.g., 10:00 AM)
             className: paymentInfo.className,

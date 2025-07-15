@@ -83,7 +83,7 @@ const ProfilePage = () => {
 
 
       // ✅ PATCH using user._id
-      if (user?._id) { // Ensure MongoDB _id is available
+      if (user?._id) { 
           await axios.patch(`/users/${user._id}`, {
             name,
             photoURL: finalPhotoURL,

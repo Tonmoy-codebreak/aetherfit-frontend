@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import axios from "axios";
+import { IoMdDoneAll } from "react-icons/io";
+import { useAuth } from "../AuthProvider/useAuth";
 
 const TrainerDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [trainerApplied, setTrainerApplied] = useState(false);
 
   useEffect(() => {
     const fetchTrainer = async () => {
@@ -17,11 +22,9 @@ const TrainerDetailsPage = () => {
         setError(null);
 
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers/${id}`);
-
         if (!res.data || !res.data._id) {
           throw new Error("Trainer data not found");
         }
-
         setTrainer(res.data);
       } catch (err) {
         setError("Failed to load trainer details. Please try again later.");
@@ -31,8 +34,45 @@ const TrainerDetailsPage = () => {
       }
     };
 
+    const fetchBookedSlots = async () => {
+      try {
+        if (!user?.email) return;
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/booking-logs`,
+          { params: { userEmail: user.email } }
+        );
+        const bookingsForTrainer = res.data.filter(
+          (booking) => booking.trainerId === id
+        );
+        setBookedSlots(bookingsForTrainer);
+      } catch (err) {
+        console.error("Failed to fetch booked slots", err);
+      }
+    };
+
+    const checkTrainerApplication = async () => {
+      try {
+        if (!user?.email) return;
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`
+        );
+        const hasPending = res.data.some((app) => app.status === "pending");
+        setTrainerApplied(hasPending);
+      } catch (err) {
+        console.error("Trainer application check error", err);
+      }
+    };
+
     fetchTrainer();
-  }, [id]);
+    fetchBookedSlots();
+    checkTrainerApplication();
+  }, [id, user?.email]);
+
+  const isSlotBooked = (day, time) => {
+    return bookedSlots.some(
+      (slot) => slot.slotDay === day && slot.slotTime === time
+    );
+  };
 
   if (loading)
     return (
@@ -71,7 +111,7 @@ const TrainerDetailsPage = () => {
     bio,
     expertise = [],
     yearsOfExperience,
-    socialLinks = {},
+    socialLinks = [],
     availableSlots = [],
   } = trainer;
 
@@ -83,7 +123,6 @@ const TrainerDetailsPage = () => {
       <h1 className="text-4xl font-bold mb-10 text-center">{name}</h1>
 
       <div className="flex flex-col md:flex-row gap-12">
-        {/* Trainer Info */}
         <div className="md:w-1/2 space-y-6">
           <img
             src={photoURL || "https://via.placeholder.com/400x400?text=No+Image"}
@@ -117,24 +156,27 @@ const TrainerDetailsPage = () => {
           <div>
             <h2 className="text-2xl font-semibold mb-2">Social Links</h2>
             <div className="flex gap-4">
-              {socialLinks.facebook && (
-                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="underline">
-                  Facebook
-                </a>
-              )}
-              {socialLinks.instagram && (
-                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="underline">
-                  Instagram
-                </a>
-              )}
-              {!socialLinks.facebook && !socialLinks.instagram && (
+              {socialLinks.length > 0 ? (
+                socialLinks.map(({ platform, url }, idx) =>
+                  url ? (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline capitalize"
+                    >
+                      {platform}
+                    </a>
+                  ) : null
+                )
+              ) : (
                 <span style={{ opacity: 0.7 }}>No social links available</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Available Slots */}
         <div className="md:w-1/2">
           <h2 className="text-3xl font-semibold mb-6 text-center">Available Slots</h2>
 
@@ -143,32 +185,45 @@ const TrainerDetailsPage = () => {
           )}
 
           <div className="flex flex-wrap gap-4 justify-center">
-            {availableSlots.map(({ day, time }, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  navigate(`/booking/${id}/${day}/${encodeURIComponent(time)}`);
-                }}
-                className="px-5 py-2 rounded font-semibold"
-                style={{ backgroundColor: "#faba22", color: "black", minWidth: "120px" }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#d99918")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#faba22")}
-              >
-                {day} {time}
-              </button>
-            ))}
+            {availableSlots.map(({ day, time }, idx) => {
+              const booked = isSlotBooked(day, time);
+              return (
+                <button
+                  key={idx}
+                  disabled={booked}
+                  onClick={() => !booked && navigate(`/booking/${id}/${day}/${encodeURIComponent(time)}`)}
+                  className={`px-5 py-2 rounded font-semibold flex items-center gap-2 ${
+                    booked ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  style={{ backgroundColor: "#faba22", color: "black", minWidth: "120px" }}
+                  onMouseOver={(e) => !booked && (e.currentTarget.style.backgroundColor = "#d99918")}
+                  onMouseOut={(e) => !booked && (e.currentTarget.style.backgroundColor = "#faba22")}
+                >
+                  {day} {time} {booked && <IoMdDoneAll size={20} color="green" />}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Be A Trainer Section */}
           <div className="mt-12 text-center">
             <h2 className="text-2xl font-semibold mb-4">Want to Help Others?</h2>
             <p className="mb-6 opacity-80">Join as a certified trainer and share your expertise with the community.</p>
-            <button
-              onClick={() => navigate("/betrainer")}
-              className="px-6 py-3 rounded-lg font-bold bg-[#faba22] text-black hover:bg-black hover:text-[#faba22] transition"
-            >
-              Become a Trainer
-            </button>
+
+            {!trainerApplied ? (
+              <button
+                onClick={() => navigate("/betrainer")}
+                className="px-6 py-3 rounded-lg font-bold bg-[#faba22] text-black hover:bg-black hover:text-[#faba22] transition"
+              >
+                Become a Trainer
+              </button>
+            ) : (
+              <button
+                disabled
+                className="px-6 py-3 rounded-lg font-bold bg-gray-500 text-white cursor-not-allowed"
+              >
+                Trainer Application Pending
+              </button>
+            )}
           </div>
         </div>
       </div>

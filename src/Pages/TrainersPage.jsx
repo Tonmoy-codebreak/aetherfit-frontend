@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { FaFacebookF, FaTwitter, FaLinkedin, FaInstagram } from "react-icons/fa";
-import { Link } from "react-router"; 
+import { Link } from "react-router";
 
 const fetchTrainers = async () => {
   const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers`);
@@ -12,17 +12,22 @@ const fetchTrainers = async () => {
   return res.data;
 };
 
+const iconMap = {
+  facebook: FaFacebookF,
+  twitter: FaTwitter,
+  linkedin: FaLinkedin,
+  instagram: FaInstagram,
+};
+
 const AllTrainersPage = () => {
-  // --- CHANGE IS HERE ---
   const {
     data: trainers = [],
     isLoading,
-    error
+    error,
   } = useQuery({
-    queryKey: ["trainers"], // This is the query key
-    queryFn: fetchTrainers, // This is the query function
+    queryKey: ["trainers"],
+    queryFn: fetchTrainers,
   });
-  // --- END OF CHANGE ---
 
   if (isLoading) {
     return (
@@ -71,10 +76,9 @@ const AllTrainersPage = () => {
             _id,
             photoURL = "https://via.placeholder.com/400x300?text=No+Image",
             name = "Unnamed Trainer",
-            expertise = [], 
+            expertise = [],
             yearsOfExperience = "N/A",
-            sociallinks = {},
-            email= {},
+            socialLinks = [], // Expecting array here
             availableSlots = [],
           } = trainer || {};
 
@@ -91,34 +95,45 @@ const AllTrainersPage = () => {
                 onError={(e) => (e.target.src = "https://via.placeholder.com/400x300?text=No+Image")}
               />
               <h2 className="text-xl font-semibold mb-1">{name}</h2>
-              {/* Display expertise as a comma-separated string or first item */}
               <p className="mb-2" style={{ opacity: 0.8 }}>
-                {Array.isArray(expertise) && expertise.length > 0 ? expertise.join(', ') : "Expertise info not available"}
+                {Array.isArray(expertise) && expertise.length > 0
+                  ? expertise.join(", ")
+                  : "Expertise info not available"}
               </p>
-              <p className="mb-3"><strong>Experience:</strong> {yearsOfExperience} years</p>
-              
+              <p className="mb-3">
+                <strong>Experience:</strong> {yearsOfExperience} years
+              </p>
+
               <div className="flex gap-3 mb-4">
-                {sociallinks.facebook && (
-                  <a href={social.facebook} target="_blank" rel="noreferrer" className="hover:opacity-75 transition" style={{ color: "#faba22" }}>
-                    <FaFacebookF size={20} />
-                  </a>
-                )}
-                {sociallinks.instagram && (
-                  <a href={social.twitter} target="_blank" rel="noreferrer" className="hover:opacity-75 transition" style={{ color: "#faba22" }}>
-                    <FaInstagram size={20} />
-                  </a>
-                )}
-{/*                 
-                {!sociallinks.facebook && !sociallinks.instagram && (
+                {socialLinks.length > 0 ? (
+                  socialLinks.map(({ platform, url }, idx) => {
+                    if (!url) return null;
+                    const IconComponent = iconMap[platform.toLowerCase()];
+                    if (!IconComponent) return null;
+                    return (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:opacity-75 transition"
+                        style={{ color: "#faba22" }}
+                        title={platform}
+                      >
+                        <IconComponent size={20} />
+                      </a>
+                    );
+                  })
+                ) : (
                   <span style={{ opacity: 0.5, fontStyle: "italic" }}>No social links available</span>
-                )} */}
+                )}
               </div>
 
               <div className="mb-4 flex flex-wrap gap-2">
                 {availableSlots.length > 0 ? (
                   availableSlots.slice(0, 3).map((slot, idx) => (
                     <span
-                      key={idx} // Using index as key is okay if slots don't change order or get added/removed. Unique IDs are better if available.
+                      key={idx}
                       className="px-3 py-1 rounded text-sm font-semibold"
                       style={{ backgroundColor: "#faba22", color: "black" }}
                     >
@@ -130,11 +145,15 @@ const AllTrainersPage = () => {
                 )}
               </div>
 
-              {/* Use Link component for client-side navigation */}
               <Link
                 to={`/trainers/${_id}`}
                 className="block w-full text-center font-semibold py-2 rounded"
-                style={{ backgroundColor: "#faba22", color: "black", cursor: "pointer", transition: "background-color 0.3s" }}
+                style={{
+                  backgroundColor: "#faba22",
+                  color: "black",
+                  cursor: "pointer",
+                  transition: "background-color 0.3s",
+                }}
                 onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#d99918")}
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#faba22")}
               >

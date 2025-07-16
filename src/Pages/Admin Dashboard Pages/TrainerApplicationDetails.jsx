@@ -41,7 +41,7 @@ const TrainerApplicationDetails = () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/trainer-application/${id}/approve`);
       alert("Trainer approved successfully");
-      navigate("/admin/trainer-applications");
+      navigate("/");
     } catch {
       setError("Failed to approve trainer");
     } finally {
@@ -79,6 +79,7 @@ const TrainerApplicationDetails = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="p-6 max-w-2xl mx-auto">

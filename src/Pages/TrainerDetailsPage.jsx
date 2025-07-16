@@ -1,19 +1,40 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router"; 
 import axios from "axios";
 import { IoMdDoneAll } from "react-icons/io";
 import { useAuth } from "../AuthProvider/useAuth";
+import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa"; // Import social icons
+
+// Helper function to determine social icon based on URL
+const getSocialIcon = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const lowerUrl = url.toLowerCase();
+
+  if (lowerUrl.includes("facebook.com")) {
+    return FaFacebookF;
+  }
+  if (lowerUrl.includes("instagram.com")) {
+    return FaInstagram;
+  }
+  if (lowerUrl.includes("twitter.com") || lowerUrl.includes("x.com")) {
+    return FaTwitter;
+  }
+  if (lowerUrl.includes("linkedin.com")) {
+    return FaLinkedinIn;
+  }
+  return null;
+};
 
 const TrainerDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuth(); // Auth user from Firebase/Auth
 
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [trainerApplied, setTrainerApplied] = useState(false);
+  const [trainerApplied, setTrainerApplied] = useState(false); // Status of current user's trainer application
 
   useEffect(() => {
     const fetchTrainer = async () => {
@@ -28,7 +49,7 @@ const TrainerDetailsPage = () => {
         setTrainer(res.data);
       } catch (err) {
         setError("Failed to load trainer details. Please try again later.");
-        console.error(err);
+        console.error("Fetch trainer error:", err);
       } finally {
         setLoading(false);
       }
@@ -36,195 +57,262 @@ const TrainerDetailsPage = () => {
 
     const fetchBookedSlots = async () => {
       try {
-        if (!user?.email) return;
+        if (!user?.email) {
+          setBookedSlots([]); // Clear if no user
+          return;
+        }
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/booking-logs`,
           { params: { userEmail: user.email } }
         );
-        const bookingsForTrainer = res.data.filter(
+        // Filter bookings specific to this trainer
+        const bookingsForThisTrainer = res.data.filter(
           (booking) => booking.trainerId === id
         );
-        setBookedSlots(bookingsForTrainer);
+        setBookedSlots(bookingsForThisTrainer);
       } catch (err) {
-        console.error("Failed to fetch booked slots", err);
+        console.error("Failed to fetch booked slots:", err);
+        // Optionally show a user-friendly error for booked slots
       }
     };
 
     const checkTrainerApplication = async () => {
       try {
-        if (!user?.email) return;
+        if (!user?.email) {
+          setTrainerApplied(false);
+          return;
+        }
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`
         );
-        const hasPending = res.data.some((app) => app.status === "pending");
-        setTrainerApplied(hasPending);
+        // Check if any application (pending or rejected) exists for the current user
+        const hasApplication = res.data.some((app) => app.email === user.email);
+        setTrainerApplied(hasApplication);
       } catch (err) {
-        console.error("Trainer application check error", err);
+        console.error("Trainer application check error:", err);
       }
     };
 
     fetchTrainer();
     fetchBookedSlots();
     checkTrainerApplication();
-  }, [id, user?.email]);
+  }, [id, user?.email]); // Re-run if trainer ID or user email changes
 
-  const isSlotBooked = (day, time) => {
+  const isSlotBooked = (day, timeRange) => {
     return bookedSlots.some(
-      (slot) => slot.slotDay === day && slot.slotTime === time
+      (slot) => slot.slotDay === day && slot.slotTime === timeRange
     );
   };
 
+  // Loading state UI
   if (loading)
     return (
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-yellow-500 my-auto mx-auto"></div>
-        <h2 className="text-zinc-900 dark:text-white mt-4">Loading...</h2>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Your adventure is about to begin
-        </p>
+      <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
+        <p className="text-[#faba22] ml-4 text-xl font-inter">Loading trainer details...</p>
       </div>
     );
 
+  // Error state UI
   if (error)
     return (
-      <div
-        className="flex justify-center items-center h-screen"
-        style={{ color: "#faba22", backgroundColor: "black" }}
-      >
+      <div className="flex justify-center items-center min-h-screen bg-zinc-950 text-red-500 text-xl font-inter">
         {error}
       </div>
     );
 
+  // Trainer not found UI
   if (!trainer)
     return (
-      <div
-        className="p-6 max-w-4xl mx-auto text-center"
-        style={{ color: "#faba22", backgroundColor: "black" }}
-      >
-        <h2>Trainer not found</h2>
+      <div className="p-6 pt-20 min-h-screen flex flex-col justify-center items-center bg-zinc-950 text-[#faba22] font-funnel">
+        <h2 className="text-4xl font-bold text-white mb-4">Trainer Not Found</h2>
+        <p className="text-lg text-zinc-300">The trainer you are looking for does not exist.</p>
       </div>
     );
 
+  // Destructure trainer data with robust fallbacks
   const {
-    name,
-    photoURL,
-    bio,
+    name = "Unnamed Trainer",
+    photoURL = "https://placehold.co/400x400/363636/DDDDDD?text=No+Image",
+    bio = "No bio available.",
     expertise = [],
+    skills = [],
     yearsOfExperience,
+    availableDays = [],
+    availableTime,
+    fromHour,
+    fromAMPM,
+    toHour,
+    toAMPM,
     socialLinks = [],
-    availableSlots = [],
+    additionalInfo = "None",
+    bookingCount = 0, // Keeping these for potential future display
+    status = "N/A",   // Keeping these for potential future display
+    slots = [],
   } = trainer;
 
+  // Determine which skills array to display
+  const displaySkills = Array.isArray(expertise) && expertise.length > 0 ? expertise : skills;
+
+  // Format available time if it's not already a single string
+  const formattedAvailableTime =
+    availableTime ||
+    (fromHour && toHour && fromAMPM && toAMPM
+      ? `${fromHour} ${fromAMPM} - ${toHour} ${toAMPM}`
+      : "N/A");
+
   return (
-    <div
-      className="max-w-5xl mx-auto p-6 pt-20"
-      style={{ backgroundColor: "black", color: "#faba22", fontFamily: "Funnel, sans-serif" }}
-    >
-      <h1 className="text-4xl font-bold mb-10 text-center">{name}</h1>
+    <div className="min-h-screen bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16">
+      <div className="max-w-6xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-8 md:p-12">
+        <h1 className="text-5xl md:text-6xl font-bold mb-10 text-center text-white font-funnel drop-shadow-lg">
+          {name}
+        </h1>
 
-      <div className="flex flex-col md:flex-row gap-12">
-        <div className="md:w-1/2 space-y-6">
-          <img
-            src={photoURL || "https://via.placeholder.com/400x400?text=No+Image"}
-            alt={name}
-            className="w-full rounded-lg object-cover"
-            style={{ maxHeight: "400px" }}
-            onError={(e) => (e.target.src = "https://via.placeholder.com/400x400?text=No+Image")}
-          />
+        <div className="flex flex-col md:flex-row gap-12 mb-12"> {/* Added mb-12 to separate from CTA */}
+          {/* Left Column: Trainer Info */}
+          <div className="md:w-1/2 space-y-8">
+            <div className="relative overflow-hidden rounded-xl border border-zinc-700 shadow-lg">
+              <img
+                src={photoURL}
+                alt={name}
+                className="w-full h-80 object-cover rounded-xl"
+                onError={(e) => (e.target.src = "https://placehold.co/600x400/363636/DDDDDD?text=No+Image")}
+              />
+            </div>
 
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Bio</h2>
-            <p style={{ opacity: 0.85 }}>{bio || "No bio available."}</p>
-          </div>
+            {/* Bio Section */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Bio</h2>
+              <p className="text-zinc-300 leading-relaxed">{bio}</p>
+            </div>
 
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Expertise</h2>
-            <ul className="list-disc list-inside">
-              {expertise.length > 0 ? (
-                expertise.map((item, idx) => <li key={idx}>{item}</li>)
+            {/* Skills Section */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Skills</h2>
+              {displaySkills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {displaySkills.map((skill, idx) => (
+                    <span key={idx} className="px-4 py-1.5 rounded-full bg-zinc-700 text-zinc-200 text-sm font-medium shadow-sm">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               ) : (
-                <li>No expertise information</li>
-              )}
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Experience</h2>
-            <p>{yearsOfExperience ? `${yearsOfExperience} years` : "N/A"}</p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Social Links</h2>
-            <div className="flex gap-4">
-              {socialLinks.length > 0 ? (
-                socialLinks.map(({ platform, url }, idx) =>
-                  url ? (
-                    <a
-                      key={idx}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline capitalize"
-                    >
-                      {platform}
-                    </a>
-                  ) : null
-                )
-              ) : (
-                <span style={{ opacity: 0.7 }}>No social links available</span>
+                <p className="text-zinc-400 italic">No specific skills listed.</p>
               )}
             </div>
+
+            {/* Experience */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Experience</h2>
+              <p className="text-zinc-300">{yearsOfExperience ? `${yearsOfExperience} years` : "N/A"}</p>
+            </div>
+
+            {/* Availability */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Availability</h2>
+              <p className="text-zinc-300">
+                <strong className="text-white">Days:</strong> {availableDays.length > 0 ? availableDays.join(", ") : "N/A"}
+              </p>
+              <p className="text-zinc-300">
+                <strong className="text-white">Time:</strong> {formattedAvailableTime}
+              </p>
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Connect with {name.split(' ')[0]}</h2>
+              <div className="flex gap-5 flex-wrap">
+                {Array.isArray(socialLinks) && socialLinks.length > 0 ? (
+                  socialLinks.map((linkObj, idx) => {
+                    const Icon = getSocialIcon(linkObj.url);
+                    if (!Icon || !linkObj.url) return null;
+                    return (
+                      <a
+                        key={idx}
+                        href={linkObj.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#faba22] hover:text-yellow-400 transition-colors duration-200 transform hover:scale-125"
+                        title={linkObj.platform || 'Social Link'}
+                      >
+                        <Icon size={30} />
+                      </a>
+                    );
+                  })
+                ) : (
+                  <p className="text-zinc-400 italic">No social links available.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div>
+              <h2 className="text-3xl font-semibold mb-3 text-white">Additional Info</h2>
+              <p className="text-zinc-300 leading-relaxed">{additionalInfo}</p>
+            </div>
+          </div>
+
+          {/* Right Column: Available Slots */}
+          <div className="md:w-1/2"> {/* Removed flex-col as it's no longer needed for vertical stacking with CTA */}
+            <h2 className="text-4xl font-semibold mb-8 text-center text-white font-funnel">Available Slots</h2>
+
+            {slots.length === 0 ? (
+              <p className="text-zinc-400 text-center text-lg italic py-10 rounded-lg bg-zinc-800 border border-zinc-700 shadow-inner">
+                No available slots at the moment. Please check back later!
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-4 justify-center p-4 bg-zinc-800 rounded-lg border border-zinc-700 shadow-inner">
+                {slots
+                  .filter(slot => slot && slot.day && slot.timeRange)
+                  .map((slot, idx) => {
+                    const booked = isSlotBooked(slot.day, slot.timeRange);
+                    return (
+                      <button
+                        key={idx}
+                        disabled={booked}
+                        onClick={() => !booked && navigate(`/booking/${id}/${slot.day}/${encodeURIComponent(slot.timeRange)}`)}
+                        className={`
+                          px-6 py-3 rounded-lg font-semibold flex items-center gap-2 text-lg
+                          transition-all duration-300 shadow-md transform hover:-translate-y-1
+                          ${
+                            booked
+                              ? "bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-70"
+                              : "bg-[#faba22] text-black hover:bg-yellow-500 hover:shadow-lg"
+                          }
+                        `}
+                        title={slot.slotName || `${slot.day} ${slot.timeRange}`}
+                      >
+                        {slot.day} {slot.timeRange} {booked && <IoMdDoneAll size={24} color="#22c55e" />}
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="md:w-1/2">
-          <h2 className="text-3xl font-semibold mb-6 text-center">Available Slots</h2>
+        {/* NEW: Standalone "Become a Trainer" CTA Section */}
+        <div className="mt-16 p-8 bg-zinc-800 rounded-xl shadow-xl text-center border border-zinc-700">
+          <h2 className="text-3xl font-semibold mb-4 text-white font-funnel">Want to Help Others?</h2>
+          <p className="mb-6 text-zinc-300 leading-relaxed">Join our team of certified trainers and share your expertise to inspire and guide our community towards their fitness goals.</p>
 
-          {availableSlots.length === 0 && (
-            <p style={{ opacity: 0.7, textAlign: "center" }}>No available slots at the moment.</p>
+          {!trainerApplied ? (
+            <button
+              onClick={() => navigate("/betrainer")}
+              className="px-8 py-4 rounded-xl font-bold text-xl bg-[#faba22] text-black hover:bg-yellow-500
+                         transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Become a Trainer
+            </button>
+          ) : (
+            <button
+              disabled
+              className="px-8 py-4 rounded-xl font-bold text-xl bg-zinc-700 text-zinc-400 cursor-not-allowed shadow-lg"
+            >
+              Trainer Application Pending
+            </button>
           )}
-
-          <div className="flex flex-wrap gap-4 justify-center">
-            {availableSlots.map(({ day, time }, idx) => {
-              const booked = isSlotBooked(day, time);
-              return (
-                <button
-                  key={idx}
-                  disabled={booked}
-                  onClick={() => !booked && navigate(`/booking/${id}/${day}/${encodeURIComponent(time)}`)}
-                  className={`px-5 py-2 rounded font-semibold flex items-center gap-2 ${
-                    booked ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  style={{ backgroundColor: "#faba22", color: "black", minWidth: "120px" }}
-                  onMouseOver={(e) => !booked && (e.currentTarget.style.backgroundColor = "#d99918")}
-                  onMouseOut={(e) => !booked && (e.currentTarget.style.backgroundColor = "#faba22")}
-                >
-                  {day} {time} {booked && <IoMdDoneAll size={20} color="green" />}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-12 text-center">
-            <h2 className="text-2xl font-semibold mb-4">Want to Help Others?</h2>
-            <p className="mb-6 opacity-80">Join as a certified trainer and share your expertise with the community.</p>
-
-            {!trainerApplied ? (
-              <button
-                onClick={() => navigate("/betrainer")}
-                className="px-6 py-3 rounded-lg font-bold bg-[#faba22] text-black hover:bg-black hover:text-[#faba22] transition"
-              >
-                Become a Trainer
-              </button>
-            ) : (
-              <button
-                disabled
-                className="px-6 py-3 rounded-lg font-bold bg-gray-500 text-white cursor-not-allowed"
-              >
-                Trainer Application Pending
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>

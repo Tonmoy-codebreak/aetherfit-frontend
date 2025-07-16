@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -54,11 +54,11 @@ const CheckoutForm = () => {
       setMessage("Payment Successful!");
 
       try {
-       await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
             trainerId: paymentInfo.trainerId,
             trainerName: paymentInfo.trainerName,
             trainerEmail: paymentInfo.trainerEmail,
-            slotDay: paymentInfo.slotName.split(" ")[0],           // day (e.g., Mon)
+            slotDay: paymentInfo.slotName.split(" ")[0], // day (e.g., Mon)
             slotTime: paymentInfo.slotName.split(" ").slice(1).join(" "), // time (e.g., 10:00 AM)
             className: paymentInfo.className,
             packageId: paymentInfo.packageId,
@@ -79,35 +79,112 @@ const CheckoutForm = () => {
   };
 
   if (!paymentInfo || !user) {
-    return <p className="text-center mt-20 text-yellow-400">Invalid Payment Request</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+        <p className="text-center text-yellow-400 text-xl font-semibold">Invalid Payment Request. Please go back.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-lg mx-auto mt-20 p-6 bg-black rounded-md font-sans">
-      <h1 className="text-3xl font-bold text-[#faba22] text-center mb-6">Confirm Your Payment</h1>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-8 md:p-10">
+        <h1 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-8 font-funnel drop-shadow-lg">
+          Confirm Your Payment
+        </h1>
 
-      <div className="space-y-2 text-white mb-6">
-        <p><span className="text-[#faba22] font-semibold">Trainer:</span> {paymentInfo.trainerName}</p>
-        <p><span className="text-[#faba22] font-semibold">Slot:</span> {paymentInfo.slotDay}, {paymentInfo.slotTime}</p>
-        <p><span className="text-[#faba22] font-semibold">Package:</span> {paymentInfo.packageName} (${paymentInfo.packagePrice})</p>
-        <p><span className="text-[#faba22] font-semibold">Your Name:</span> {user?.name || user?.displayName}</p>
-        <p><span className="text-[#faba22] font-semibold">Your Email:</span> {user?.email}</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="p-4 bg-gray-800 rounded">
-          <CardElement options={{ style: { base: { color: "#ffffff" } } }} />
+        {/* Payment Summary Section */}
+        <div className="bg-zinc-800 rounded-xl p-6 mb-8 border border-zinc-700 shadow-inner space-y-4">
+          <h2 className="text-2xl font-semibold text-white mb-4 text-center">Order Summary</h2>
+          <p className="text-zinc-300 text-lg flex justify-between items-center">
+            <span className="font-semibold text-[#faba22]">Trainer:</span>
+            <span className="text-white">{paymentInfo.trainerName}</span>
+          </p>
+          <p className="text-zinc-300 text-lg flex justify-between items-center">
+            <span className="font-semibold text-[#faba22]">Slot:</span>
+            <span className="text-white">{paymentInfo.slotName}</span>
+          </p>
+          <p className="text-zinc-300 text-lg flex justify-between items-center">
+            <span className="font-semibold text-[#faba22]">Class:</span>
+            <span className="text-white">{paymentInfo.className || "N/A"}</span>
+          </p>
+          <p className="text-zinc-300 text-lg flex justify-between items-center">
+            <span className="font-semibold text-[#faba22]">Membership:</span>
+            <span className="text-white">{paymentInfo.packageName}</span>
+          </p>
+          <div className="border-t border-zinc-700 pt-4 mt-4 flex justify-between items-center">
+            <p className="text-2xl font-bold text-[#faba22]">Total Amount:</p>
+            <p className="text-2xl font-bold text-white">${paymentInfo.packagePrice}</p>
+          </div>
         </div>
 
-        <button
-          disabled={!stripe || processing}
-          className="w-full py-3 rounded bg-[#faba22] text-black font-bold text-lg hover:bg-yellow-600 transition-colors"
-        >
-          {processing ? "Processing..." : `Pay $${paymentInfo.packagePrice}`}
-        </button>
-      </form>
+        {/* User Info Section */}
+        <div className="bg-zinc-800 rounded-xl p-6 mb-8 border border-zinc-700 shadow-inner space-y-4">
+            <h2 className="text-2xl font-semibold text-white mb-4 text-center">Your Details</h2>
+            <p className="text-zinc-300 text-lg flex justify-between items-center">
+                <span className="font-semibold text-[#faba22]">Name:</span>
+                <span className="text-white">{user?.name || user?.displayName || "N/A"}</span>
+            </p>
+            <p className="text-zinc-300 text-lg flex justify-between items-center">
+                <span className="font-semibold text-[#faba22]">Email:</span>
+                <span className="text-white">{user?.email || "N/A"}</span>
+            </p>
+        </div>
 
-      {message && <p className="mt-4 text-center text-yellow-400">{message}</p>}
+
+        {/* Payment Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="p-5 bg-zinc-800 rounded-xl border border-zinc-700 shadow-md">
+            <label htmlFor="card-element" className="block text-zinc-300 text-lg font-semibold mb-3">
+              Card Details
+            </label>
+            <CardElement
+              id="card-element"
+              options={{
+                style: {
+                  base: {
+                    color: "#ffffff", // White text for input
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '18px',
+                    '::placeholder': {
+                      color: '#a1a1aa', // Zinc-400 for placeholder
+                    },
+                  },
+                  invalid: {
+                    color: '#ef4444', // Red-500 for errors
+                  },
+                },
+                hidePostalCode: true, // Often preferred for simpler checkout
+              }}
+            />
+          </div>
+
+          <button
+            disabled={!stripe || processing}
+            className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl
+                       hover:bg-yellow-500 transition-colors duration-300 shadow-lg hover:shadow-xl
+                       transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+          >
+            {processing ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              `Pay $${paymentInfo.packagePrice}`
+            )}
+          </button>
+        </form>
+
+        {message && (
+          <p className={`mt-6 text-center text-lg font-semibold ${message.includes("Successful") ? "text-green-400" : "text-red-400"}`}>
+            {message}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

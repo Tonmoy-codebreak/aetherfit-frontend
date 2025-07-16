@@ -32,6 +32,10 @@ import Subscriber from "../Pages/Admin Dashboard Pages/Subscriber";
 import AddForumAdmin from "../Pages/Admin Dashboard Pages/AddForumAdmin";
 import ForumPostDetails from "../Pages/ForumPostDetails";
 
+import AddSlot from "../Pages/Trainer Dashboard pages/AddSlot";
+import AddForumTrainer from "../Pages/Trainer Dashboard pages/AddForumTrainer";
+import ManageSlot from "../Pages/Trainer Dashboard pages/ManageSlot";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -81,12 +85,11 @@ const router = createBrowserRouter([
       {
         path: "trainer",
         element: <TrainerDashboard />,
-        // Add trainer dashboard children routes here if you have any,
-        // for example:
-        // children: [
-        //   { path: "manage-slots", element: <ManageSlotsPage /> },
-        //   { path: "add-slot", element: <AddSlotPage /> },
-        // ],
+        children: [
+          { path: "manageslots", element: <ManageSlot></ManageSlot> },
+          { path: "addslot", element: <AddSlot></AddSlot> },
+          { path: "addforumbytrainer", element: <AddForumTrainer></AddForumTrainer>}
+        ],
       },
       {
         path: "admin",

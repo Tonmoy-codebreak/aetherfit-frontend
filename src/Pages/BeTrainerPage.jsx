@@ -50,7 +50,7 @@ const BeTrainerPage = () => {
   const navigate = useNavigate();
 
   const [mongoUser, setMongoUser] = useState(null);
-  const [trainerApplied, setTrainerApplied] = useState(false);
+  // Removed: const [applications, setApplications] = useState([]); // Not needed if not checking pending/rejected applications
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -70,32 +70,49 @@ const BeTrainerPage = () => {
   });
 
   useEffect(() => {
-    if (user?.email) {
-      axios
-        .get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`)
-        .then((res) => {
-          const dbUser = res.data;
-          setMongoUser(dbUser);
-          setFormData((prev) => ({
-            ...prev,
-            fullName: dbUser.name || user.displayName || "",
-            email: dbUser.email || user.email || "",
-            photoURL: dbUser.photoURL || user.photoURL || "",
-          }));
+    if (!user?.email) return;
 
-          axios
-            .get(`${import.meta.env.VITE_API_URL}/trainer-applications?email=${dbUser.email}`)
-            .then(({ data }) => {
-              const hasPending = data.some((app) => app.status === "pending");
-              setTrainerApplied(hasPending);
-            })
-            .catch((err) => console.error("Trainer application check error:", err));
-        })
-        .catch((err) => {
-          console.error("Failed to fetch MongoDB user:", err);
-        });
-    }
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`)
+      .then(({ data }) => {
+        setMongoUser(data);
+        setFormData((prev) => ({
+          ...prev,
+          fullName: data.name || user.displayName || "",
+          email: data.email || user.email || "",
+          photoURL: data.photoURL || user.photoURL || "",
+        }));
+        // Removed: return axios.get(`${import.meta.env.VITE_API_URL}/trainer-applications?email=${data.email}`);
+      })
+      // Removed: .then(({ data }) => { setApplications(data); })
+      .catch((err) => {
+        console.error("Error fetching user data:", err); // Adjusted error message
+      });
   }, [user]);
+
+  // Removed: const pendingApplication = applications.find((app) => app.status === "pending");
+  // Removed: const rejectedApplications = applications.filter((app) => app.status === "rejected").sort((a, b) => (a._id > b._id ? -1 : 1));
+
+  // Removed: This entire useEffect block that triggered the SweetAlert
+  /*
+  useEffect(() => {
+    if (rejectedApplications.length > 0) {
+      const latestRejectedApp = rejectedApplications[0];
+      const displayedRejections = JSON.parse(localStorage.getItem('displayedRejections') || '{}');
+
+      if (!displayedRejections[latestRejectedApp._id]) {
+        Swal.fire({
+          icon: "info",
+          title: "Trainer Application Rejected",
+          html: `<p>${latestRejectedApp.feedback || "No feedback provided."}</p>`,
+        }).then(() => {
+          displayedRejections[latestRejectedApp._id] = true;
+          localStorage.setItem('displayedRejections', JSON.stringify(displayedRejections));
+        });
+      }
+    }
+  }, [rejectedApplications]);
+  */
 
   const handleCheckboxChange = (key, value) => {
     setFormData((prev) => {
@@ -108,16 +125,23 @@ const BeTrainerPage = () => {
 
   const handleSocialPlatformChange = (index, selectedOption) => {
     setFormData((prev) => {
+      const newSocialLinks = [...prev.socialLinks];
+      const selectedValue = selectedOption ? selectedOption.value : null;
+
       const otherIndex = index === 0 ? 1 : 0;
       if (
-        selectedOption &&
-        prev.socialLinks[otherIndex].platform === selectedOption.value
+        selectedValue &&
+        newSocialLinks[otherIndex].platform === selectedValue
       ) {
-        Swal.fire("Warning", "You already selected this platform in the other slot.", "warning");
+        Swal.fire(
+          "Warning",
+          `You already selected ${selectedOption.label} in the other slot.`,
+          "warning"
+        );
         return prev;
       }
-      const newSocialLinks = [...prev.socialLinks];
-      newSocialLinks[index].platform = selectedOption ? selectedOption.value : null;
+
+      newSocialLinks[index].platform = selectedValue;
       return { ...prev, socialLinks: newSocialLinks };
     });
   };
@@ -134,7 +158,22 @@ const BeTrainerPage = () => {
     e.preventDefault();
 
     if (!mongoUser?._id) {
-      Swal.fire("Error", "Mongo user ID not found. Please refresh the page.", "error");
+      Swal.fire("Error", "User information not loaded. Please refresh the page.", "error");
+      return;
+    }
+
+    if (formData.skills.length === 0) {
+      Swal.fire("Error", "Please select at least one skill.", "error");
+      return;
+    }
+    if (formData.availableDays.length === 0) {
+      Swal.fire("Error", "Please select at least one available day.", "error");
+      return;
+    }
+    
+    const invalidSocialLinks = formData.socialLinks.some(link => link.platform && link.url.trim() === "");
+    if (invalidSocialLinks) {
+      Swal.fire("Error", "Please enter URLs for all selected social platforms.", "error");
       return;
     }
 
@@ -150,7 +189,7 @@ const BeTrainerPage = () => {
       availableTime: timeString,
       yearsOfExperience: formData.yearsOfExperience.value,
       userId: mongoUser._id,
-      status: "pending",
+      status: "pending", // Always submit as pending
       socialLinks: formData.socialLinks.filter(
         (link) => link.platform && link.url.trim() !== ""
       ),
@@ -163,12 +202,15 @@ const BeTrainerPage = () => {
       );
 
       if (data?.insertedId) {
+        // You might still want to update the user's status in your DB
+        // to reflect they have a pending application, even if the frontend
+        // doesn't block them from submitting more. This is up to your backend logic.
         await axios.patch(`${import.meta.env.VITE_API_URL}/users/${mongoUser._id}`, {
           trainerApplicationStatus: "pending",
         });
 
         Swal.fire("Success", "Your trainer application has been submitted.", "success").then(() => {
-          navigate("/dashboard");
+          navigate("/");
         });
       }
     } catch (err) {
@@ -177,9 +219,14 @@ const BeTrainerPage = () => {
     }
   };
 
-  const selectedPlatforms = formData.socialLinks
-    .map((link) => link.platform)
-    .filter(Boolean);
+  const getAvailableSocialPlatforms = (currentIndex) => {
+    return socialPlatforms.map((platform) => ({
+      ...platform,
+      isDisabled: formData.socialLinks.some(
+        (link, idx) => idx !== currentIndex && link.platform === platform.value
+      ),
+    }));
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 pt-20 bg-black min-h-screen text-[#faba22]">
@@ -225,9 +272,7 @@ const BeTrainerPage = () => {
               isMulti
               options={daysOptions}
               value={formData.availableDays}
-              onChange={(value) =>
-                setFormData({ ...formData, availableDays: value })
-              }
+              onChange={(value) => setFormData({ ...formData, availableDays: value })}
               className="text-black"
               classNamePrefix="react-select"
             />
@@ -238,11 +283,7 @@ const BeTrainerPage = () => {
             {[0, 1].map((idx) => (
               <div key={idx} className="mb-6 flex flex-col gap-2">
                 <Select
-                  options={socialPlatforms.map((platform) => ({
-                    ...platform,
-                    isDisabled: selectedPlatforms.includes(platform.value) &&
-                      formData.socialLinks[idx].platform !== platform.value,
-                  }))}
+                  options={getAvailableSocialPlatforms(idx)}
                   value={
                     formData.socialLinks[idx].platform
                       ? socialPlatforms.find(
@@ -258,7 +299,9 @@ const BeTrainerPage = () => {
                 />
                 <input
                   type="url"
-                  placeholder={`Enter ${formData.socialLinks[idx].platform || "social"} URL`}
+                  placeholder={`Enter ${
+                    formData.socialLinks[idx].platform || "social"
+                  } URL`}
                   value={formData.socialLinks[idx].url}
                   onChange={(e) => handleSocialUrlChange(idx, e.target.value)}
                   className="px-4 py-3 rounded-md bg-zinc-900 text-[#faba22]"
@@ -322,7 +365,7 @@ const BeTrainerPage = () => {
                   <Select
                     options={ampmOptions}
                     value={formData.toAMPM}
-                    onChange={(value) => setFormData({ ...formData, toAMPM: value })}
+                    onChange={(value) => setFormData({ ...formData,toAMPM: value })}
                     className="flex-1 text-black"
                     classNamePrefix="react-select"
                   />
@@ -336,7 +379,9 @@ const BeTrainerPage = () => {
             <Select
               options={experienceOptions}
               value={formData.yearsOfExperience}
-              onChange={(value) => setFormData({ ...formData, yearsOfExperience: value })}
+              onChange={(value) =>
+                setFormData({ ...formData, yearsOfExperience: value })
+              }
               className="text-black"
               classNamePrefix="react-select"
             />
@@ -357,14 +402,11 @@ const BeTrainerPage = () => {
 
           <button
             type="submit"
-            disabled={trainerApplied}
-            className={`w-full ${
-              trainerApplied
-                ? "bg-zinc-800 cursor-not-allowed"
-                : "bg-[#faba22] hover:bg-black hover:text-[#faba22] border-2 border-[#faba22]"
-            } text-black font-bold py-4 rounded-md transition`}
+            // Removed: disabled={!!pendingApplication}
+            className={`w-full bg-[#faba22] hover:bg-black hover:text-[#faba22] border-2 border-[#faba22]
+              text-black font-bold py-4 rounded-md transition`}
           >
-            {trainerApplied ? "Application Pending" : "Apply"}
+            Apply
           </button>
         </div>
       </form>

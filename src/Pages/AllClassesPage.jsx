@@ -1,34 +1,41 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router";
-
+import { Link } from "react-router"; 
 // Constants
-const CLASSES_PER_PAGE = 6;
+const CLASSES_PER_PAGE = 6; // As per requirement
 
 // Fetch function with page & search query
-const fetchClasses = async ({ page, search }) => {
+const fetchClasses = async ({ queryKey }) => {
+  const [, page, search] = queryKey; // Destructure queryKey
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/classes?page=${page}&limit=${CLASSES_PER_PAGE}&search=${search}`
   );
-  if (!res.ok) throw new Error("Failed to fetch classes");
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to fetch classes");
+  }
   return res.json();
 };
 
 const AllClassesPage = () => {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState(""); // Actual search query used in API call
+  const [searchInput, setSearchInput] = useState(""); // Input field value
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["classes", page, search],
-    queryFn: () => fetchClasses({ page, search }),
-    keepPreviousData: true,
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["classes", page, search], // Include search in queryKey
+    queryFn: fetchClasses,
+    keepPreviousData: true, // Keeps previous data while fetching new page/search
   });
+
+  const handleSearchChange = (e) => {
+    setSearchInput(e.target.value);
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
+    setPage(1); // Reset to first page on new search
+    setSearch(searchInput.trim()); // Update the search query for the API
   };
 
   const goToPage = (p) => {
@@ -38,23 +45,25 @@ const AllClassesPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-8 text-[#faba22] text-center">
-        All Classes
+    <div className="min-h-screen bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16 pt-20"> {/* Added pt-20 for header clearance */}
+      <h1 className="text-5xl md:text-6xl font-bold mb-12 text-center text-white font-funnel drop-shadow-lg">
+        Explore Our Classes
       </h1>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="mb-8 flex justify-center">
+      <form onSubmit={handleSearchSubmit} className="mb-12 flex justify-center max-w-lg mx-auto">
         <input
           type="text"
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search classes..."
-          className="px-4 py-2 rounded-l bg-zinc-900 text-white focus:outline-none"
+          onChange={handleSearchChange}
+          placeholder="Search classes by name..."
+          className="flex-grow px-5 py-3 rounded-l-full bg-zinc-800 text-white placeholder-zinc-500
+                     focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-700 text-lg"
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-[#faba22] text-black font-semibold rounded-r"
+          className="px-6 py-3 rounded-r-full bg-[#faba22] text-black font-bold text-lg
+                     hover:bg-yellow-500 transition-colors duration-200 shadow-md"
         >
           Search
         </button>
@@ -62,55 +71,76 @@ const AllClassesPage = () => {
 
       {/* Loading/Error States */}
       {isLoading && (
-        <p className="text-center mt-20 text-yellow-400">Loading classes...</p>
+        <div className="flex justify-center items-center py-20">
+          <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
+          <p className="text-[#faba22] ml-4 text-xl">Loading classes...</p>
+        </div>
       )}
       {isError && (
-        <p className="text-center mt-20 text-red-600">Failed to load classes</p>
+        <div className="text-center py-20 text-red-500 text-xl">
+          <p>Error: {error?.message || "Failed to load classes."}</p>
+          <p className="mt-2 text-zinc-400 text-lg">Please try refreshing the page.</p>
+        </div>
       )}
-      {!isLoading && !isError && !data?.classes?.length && (
-        <p className="text-center mt-20">No classes found.</p>
+      {!isLoading && !isError && (!data || data.classes?.length === 0) && (
+        <div className="text-center py-20 text-zinc-400 text-xl">
+          <p>No classes found matching your criteria.</p>
+          <p className="mt-2 text-zinc-500 text-lg">Try a different search or check back later!</p>
+        </div>
       )}
 
       {/* Classes Grid */}
       {data?.classes?.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"> {/* 3 classes per row on large screens */}
             {data.classes.map((cls) => (
               <div
                 key={cls._id}
-                className="bg-black rounded-md p-4 shadow-lg text-white"
+                className="bg-zinc-900 rounded-2xl p-6 shadow-2xl border border-zinc-800
+                           flex flex-col transform transition-all duration-300 hover:scale-[1.02] hover:shadow-yellow-900/50
+                           relative overflow-hidden group"
               >
-                <img
-                  src={cls.image}
-                  alt={cls.name}
-                  className="w-full h-48 object-cover rounded-md mb-4"
-                  loading="lazy"
-                />
-                <h2 className="text-2xl font-semibold mb-2">{cls.name}</h2>
-                <p className="mb-3 text-gray-300">{cls.details}</p>
+                {/* Class Image */}
+                <div className="relative overflow-hidden rounded-xl mb-4 border border-zinc-700 aspect-w-16 aspect-h-9">
+                  <img
+                    src={cls.image || "https://placehold.co/600x400/363636/DDDDDD?text=No+Class+Image"}
+                    alt={cls.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/363636/DDDDDD?text=No+Class+Image"; }}
+                  />
+                </div>
 
-                <div>
-                  <h3 className="font-semibold text-[#faba22] mb-2">Trainers</h3>
+                {/* Class Details */}
+                <h2 className="text-3xl font-bold mb-2 text-white leading-tight">{cls.name}</h2>
+                <p className="mb-4 text-zinc-300 text-base flex-grow leading-relaxed">
+                  {cls.details.length > 150 ? `${cls.details.substring(0, 150)}...` : cls.details}
+                </p>
 
+                {/* Trainers Section */}
+                <div className="mt-auto pt-4 border-t border-zinc-800">
+                  <h3 className="font-semibold text-[#faba22] text-lg mb-3">Meet the Trainers:</h3>
                   {cls.trainers && cls.trainers.length > 0 ? (
-                    <div className="flex space-x-4">
+                    <div className="flex flex-wrap gap-3">
                       {cls.trainers.map((trainer) => (
                         <Link
                           key={trainer._id}
                           to={`/trainers/${trainer._id}`}
-                          title={trainer.name}
-                          className="block w-16 h-16 rounded-full overflow-hidden border-2 border-[#faba22] hover:border-yellow-400 transition"
+                          title={trainer.name || "Trainer"}
+                          className="block w-16 h-16 rounded-full overflow-hidden border-2 border-zinc-700
+                                     hover:border-[#faba22] transition-colors duration-200 transform hover:scale-110 shadow-md"
                         >
                           <img
-                            src={trainer.photoURL || "/default-avatar.png"}
-                            alt={trainer.name}
+                            src={trainer.photoURL || "https://placehold.co/64x64/363636/DDDDDD?text=Trainer"}
+                            alt={trainer.name || "Trainer"}
                             className="w-full h-full object-cover"
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/64x64/363636/DDDDDD?text=Trainer"; }}
                           />
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-400 italic">No trainers available</p>
+                    <p className="text-zinc-500 italic text-sm">No trainers assigned yet.</p>
                   )}
                 </div>
               </div>
@@ -118,40 +148,50 @@ const AllClassesPage = () => {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-center mt-10 space-x-2 flex-wrap">
-            <button
-              onClick={() => goToPage(page - 1)}
-              disabled={page === 1}
-              className="px-4 py-2 bg-[#faba22] text-black font-semibold rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
+          {data.totalPages > 1 && (
+            <div className="flex justify-center mt-16 space-x-3 flex-wrap">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
+                className="px-6 py-3 bg-[#faba22] text-black font-bold rounded-lg shadow-md
+                           hover:bg-yellow-500 transition-colors duration-200
+                           disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
 
-            {[...Array(data.totalPages)].map((_, idx) => {
-              const p = idx + 1;
-              return (
-                <button
-                  key={p}
-                  onClick={() => goToPage(p)}
-                  className={`px-4 py-2 rounded font-semibold ${
-                    page === p
-                      ? "bg-yellow-600 text-black"
-                      : "bg-gray-700 text-white hover:bg-yellow-500"
-                  }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
+              <div className="flex space-x-1">
+                {[...Array(data.totalPages)].map((_, idx) => {
+                  const p = idx + 1;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => goToPage(p)}
+                      className={`px-5 py-2 rounded-lg font-semibold shadow-sm
+                                 ${
+                                   page === p
+                                     ? "bg-yellow-600 text-black"
+                                     : "bg-zinc-700 text-white hover:bg-yellow-500 hover:text-black"
+                                 }
+                                 transition-colors duration-200`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <button
-              onClick={() => goToPage(page + 1)}
-              disabled={page === data.totalPages}
-              className="px-4 py-2 bg-[#faba22] text-black font-semibold rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page === data.totalPages}
+                className="px-6 py-3 bg-[#faba22] text-black font-bold rounded-lg shadow-md
+                           hover:bg-yellow-500 transition-colors duration-200
+                           disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

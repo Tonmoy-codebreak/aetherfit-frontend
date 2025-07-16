@@ -2,19 +2,21 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { IoEye } from "react-icons/io5";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"; 
+import { FaPlus, FaTrashAlt, FaTimes, FaRegThumbsUp } from 'react-icons/fa'; 
 
 const AddForumAdmin = () => {
   const [forums, setForums] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newForum, setNewForum] = useState({
     title: "",
-    content: "",
+    content: "", // Keep content in state as logic uses it
     image: "",
   });
 
   const [photoFile, setPhotoFile] = useState(null);
   const [previewURL, setPreviewURL] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added for submit button loading state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +28,16 @@ const AddForumAdmin = () => {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/forums`);
       setForums(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching forums:", err);
+      // Optionally show a user-friendly error
+      Swal.fire({
+        title: '<span style="color:#faba22">Error</span>',
+        text: "Failed to load forums. Please try again later.",
+        icon: "error",
+        background: "black",
+        color: "#faba22",
+        confirmButtonColor: "#faba22",
+      });
     }
   };
 
@@ -50,6 +61,7 @@ const AddForumAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true); // Set loading state
 
     try {
       let finalImageURL = newForum.image;
@@ -62,9 +74,9 @@ const AddForumAdmin = () => {
         finalImageURL = uploadRes.data.url || finalImageURL;
       }
 
-      const authorId = "admin123";
-      const authorName = "Admin User";
-      const authorRole = "Admin";
+      const authorId = "admin123"; // This is hardcoded as per original logic
+      const authorName = "Admin User"; // This is hardcoded as per original logic
+      const authorRole = "Admin"; // This is hardcoded as per original logic
 
       await axios.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
         ...newForum,
@@ -74,35 +86,38 @@ const AddForumAdmin = () => {
         authorRole,
       });
 
-      setNewForum({ title: "", content: "", image: "" });
+      setNewForum({ title: "", content: "", image: "" }); // content state is still needed by logic
       setPhotoFile(null);
       setPreviewURL("");
       setIsModalOpen(false);
       Swal.fire({
-        title: "Forum Added!",
+        title: '<span style="color:#faba22">Forum Added!</span>',
+        text: "Your forum post has been submitted.",
         icon: "success",
         background: "black",
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
 
-      fetchForums();
+      fetchForums(); // Re-fetch forums to update the list
     } catch (err) {
       console.error("Forum add error:", err);
       Swal.fire({
-        title: "Error",
-        text: err.message || "Something went wrong.",
+        title: '<span style="color:#faba22">Error</span>',
+        text: err.response?.data?.message || err.message || "Something went wrong.",
         icon: "error",
         background: "black",
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
+    } finally {
+      setIsSubmitting(false); // Reset loading state
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Are you sure?",
+      title: '<span style="color:#faba22">Are you sure?</span>',
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
@@ -117,19 +132,19 @@ const AddForumAdmin = () => {
       try {
         await axios.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
         Swal.fire({
-          title: "Deleted!",
+          title: '<span style="color:#faba22">Deleted!</span>',
           text: "Forum has been deleted.",
           icon: "success",
           background: "black",
           color: "#faba22",
           confirmButtonColor: "#faba22",
         });
-        fetchForums();
+        fetchForums(); // Re-fetch forums to update the list
       } catch (error) {
         console.error("Delete forum error:", error);
         Swal.fire({
-          title: "Error",
-          text: error.message || "Failed to delete forum.",
+          title: '<span style="color:#faba22">Error</span>',
+          text: error.response?.data?.message || error.message || "Failed to delete forum.",
           icon: "error",
           background: "black",
           color: "#faba22",
@@ -140,115 +155,191 @@ const AddForumAdmin = () => {
   };
 
   return (
-    <div className="p-6 bg-black min-h-screen text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-puppin font-bold">All Forums</h1>
+    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
+        <h1 className="text-5xl md:text-6xl font-bold font-funnel text-center sm:text-left text-[#faba22] drop-shadow-lg">
+          All Forums
+        </h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-[#faba22] hover:bg-yellow-500 text-black font-semibold px-6 py-2 rounded-xl transition-all"
+          className="px-8 py-4 bg-[#faba22] hover:bg-yellow-500 text-black font-bold text-xl rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
         >
-          + Add Forum
+          <FaPlus size={20} /> Add New Forum
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl shadow-lg">
-        <table className="table-auto w-full border border-gray-700 rounded-xl overflow-hidden">
-          <thead className="bg-gray-800 text-gray-200">
-            <tr>
-              <th className="p-3">Title</th>
-              <th className="p-3">Content</th>
-              <th className="p-3">Image</th>
-              <th className="p-3">Author</th>
-              <th className="p-3">Votes</th>
-              <th className="p-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-gray-900">
-            {forums.map((forum) => (
-              <tr key={forum._id} className="border-b border-gray-700 hover:bg-gray-800 transition">
-                <td className="p-3">{forum.title}</td>
-                <td className="p-3">{forum.content.slice(0, 50)}...</td>
-                <td className="p-3">
-                  {forum.image ? (
-                    <img src={forum.image} alt="Forum" className="w-20 h-14 object-cover rounded-lg" />
-                  ) : (
-                    "N/A"
-                  )}
-                </td>
-                <td className="p-3">
-                  {forum.authorName} ({forum.authorRole})
-                </td>
-                <td className="p-3">{forum.totalUpVotes} / {forum.totalDownVotes}</td>
-                <td className="p-3 flex items-center gap-2">
-                  <button
-                    onClick={() => handleDelete(forum._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => navigate(`/forum/${forum._id}`)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center justify-center"
-                  >
-                    <IoEye size={18} />
-                  </button>
-                </td>
+      {forums.length === 0 ? (
+        <div className="bg-zinc-900 p-8 rounded-xl shadow-lg text-center text-lg mt-8 border border-zinc-800">
+          <p className="text-zinc-300">No forums found. Start by adding a new one!</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl shadow-lg border border-zinc-800 bg-zinc-900">
+          <table className="min-w-full divide-y divide-zinc-700">
+            <thead className="bg-zinc-800">
+              <tr>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tl-lg">
+                  Title
+                </th>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  Content
+                </th>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  Image
+                </th>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  Author
+                </th>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  Votes
+                </th>
+                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tr-lg">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {forums.map((forum) => (
+                <tr key={forum._id} className="bg-zinc-900 hover:bg-zinc-800 transition-colors duration-200">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">
+                    {forum.title}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-zinc-300">
+                    {forum.content.slice(0, 70)}{forum.content.length > 70 ? '...' : ''}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {forum.image ? (
+                      <img
+                        src={forum.image}
+                        alt="Forum"
+                        className="w-20 h-14 object-cover rounded-lg border border-zinc-700"
+                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/80x56/363636/DDDDDD?text=No+Img"; }}
+                      />
+                    ) : (
+                      <span className="text-zinc-500">N/A</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                    {forum.authorName || 'N/A'} ({forum.authorRole || 'N/A'})
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300 gap-1"> 
+                    <span className="flex items-center  gap-1 text-green-400">
+                      <FaRegThumbsUp /> {forum.totalUpVotes || 0}
+                    </span>
+                    
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleDelete(forum._id)}
+                        className="p-2 bg-red-700 hover:bg-red-800 text-white rounded-full transition-colors duration-200 shadow-md"
+                        title="Delete Forum"
+                      >
+                        <FaTrashAlt size={18} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/forum/${forum._id}`)}
+                        className="p-2 bg-[#faba22] hover:bg-yellow-500 text-black rounded-full transition-colors duration-200 shadow-md"
+                        title="View Forum Details"
+                      >
+                        <IoEye size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {/* Add New Forum Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-          <div className="bg-gray-900 text-white rounded-xl p-8 w-full max-w-lg relative">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setIsModalOpen(false)} // Close modal when clicking outside
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-forum-modal-title"
+        >
+          <div
+            className="bg-zinc-900 rounded-2xl max-w-lg w-full p-8 relative shadow-2xl border border-zinc-700 transform scale-95 animate-scale-in"
+            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
+          >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-[#faba22] text-3xl font-bold leading-none focus:outline-none transition-colors duration-200"
+              aria-label="Close add forum modal"
             >
-              ✕
+              <FaTimes />
             </button>
-            <h2 className="text-2xl font-puppin font-bold mb-6">Add New Forum</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                name="title"
-                value={newForum.title}
-                onChange={handleInputChange}
-                placeholder="Forum Title"
-                required
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#faba22]"
-              />
-              <textarea
-                name="content"
-                value={newForum.content}
-                onChange={handleInputChange}
-                placeholder="Forum Content"
-                required
-                rows={4}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#faba22]"
-              />
-
-              {previewURL && (
-                <img
-                  src={previewURL}
-                  alt="Preview"
-                  className="w-32 h-20 object-cover rounded-lg mx-auto"
+            <h2 id="add-forum-modal-title" className="text-3xl font-bold font-funnel mb-8 text-[#faba22] text-center">
+              Add New Forum Post
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="modal-title" className="block text-lg font-medium mb-2 text-zinc-300">Title <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  id="modal-title"
+                  name="title"
+                  value={newForum.title}
+                  onChange={handleInputChange}
+                  placeholder="Enter forum title"
+                  required
+                  className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
                 />
-              )}
+              </div>
+              {/* Removed Content UI as per user request */}
+              {/* <div>
+                <label htmlFor="modal-content" className="block text-lg font-medium mb-2 text-zinc-300">Content <span className="text-red-500">*</span></label>
+                <textarea
+                  id="modal-content"
+                  name="content"
+                  value={newForum.content}
+                  onChange={handleInputChange}
+                  placeholder="Write your forum post content here..."
+                  required
+                  rows={6}
+                  className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
+                ></textarea>
+              </div> */}
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="w-full bg-gray-800 border border-gray-700 p-2 rounded-lg file:bg-[#faba22] file:text-black"
-              />
+              <div>
+                <label htmlFor="modal-image" className="block text-lg font-medium mb-2 text-zinc-300">Image (Optional)</label>
+                {previewURL && (
+                  <div className="mb-4 flex justify-center">
+                    <img
+                      src={previewURL}
+                      alt="Image Preview"
+                      className="w-48 h-32 object-cover rounded-lg border-2 border-zinc-700 shadow-md"
+                    />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="modal-image"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
+                />
+              </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#faba22] hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg transition-all"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
-                Submit
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  'Post Forum'
+                )}
               </button>
             </form>
           </div>

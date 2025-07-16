@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 import useAxios from "../../hooks/useAxios";
-
+import { FaPlusCircle, FaBook, FaClock, FaChartLine, FaEnvelope, FaImage, FaInfoCircle } from 'react-icons/fa'; 
 
 const AddNewClass = () => {
   const axios = useAxios();
@@ -10,7 +10,7 @@ const AddNewClass = () => {
   const [details, setDetails] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [difficulty, setDifficulty] = useState("Beginner");
-  const [trainerEmails, setTrainerEmails] = useState("");
+  const [trainerEmails, setTrainerEmails] = useState(""); // This input is currently commented out in your JSX
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,8 @@ const AddNewClass = () => {
     if (!name || !details || !durationMinutes || !difficulty || !imageFile) {
       Swal.fire({
         icon: "error",
-        title: "Please fill all required fields including image.",
+        title: '<span style="color:#faba22">Missing Fields!</span>',
+        text: "Please fill all required fields including image.",
         background: "black",
         color: "#faba22",
         confirmButtonColor: "#faba22",
@@ -62,6 +63,7 @@ const AddNewClass = () => {
       }
 
       // 2. Prepare trainerEmails array from comma separated input
+      // This part is kept for logic, even if the input is commented out in JSX
       const emailsArray = trainerEmails
         .split(",")
         .map((email) => email.trim())
@@ -82,7 +84,8 @@ const AddNewClass = () => {
 
       Swal.fire({
         icon: "success",
-        title: "Class added successfully!",
+        title: '<span style="color:#faba22">Class Added!</span>',
+        text: "Class added successfully!",
         background: "black",
         color: "#faba22",
         confirmButtonColor: "#faba22",
@@ -100,7 +103,7 @@ const AddNewClass = () => {
       console.error("Add class error:", error);
       Swal.fire({
         icon: "error",
-        title: "Failed to add class",
+        title: '<span style="color:#faba22">Failed to Add Class</span>',
         text: error.message || "Something went wrong.",
         background: "black",
         color: "#faba22",
@@ -112,109 +115,146 @@ const AddNewClass = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-[#111] text-white font-inter p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-[#111] p-6 rounded-md space-y-5"
-      >
-        <h2 className="text-2xl font-bold text-[#faba22] text-center mb-4">
+    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16 flex items-center justify-center">
+      <div className="w-full max-w-2xl bg-zinc-900 p-8 rounded-2xl shadow-2xl border border-zinc-800">
+        <h2 className="text-4xl md:text-5xl font-bold font-funnel text-center mb-10 text-[#faba22] drop-shadow-lg">
           Add New Class
         </h2>
 
-        <label className="block">
-          <span className="text-gray-300">Class Name *</span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Enter class name"
-            className="mt-1 block w-full rounded-md bg-[#222] border border-gray-700 p-2 text-white focus:outline-none focus:border-[#faba22]"
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-gray-300">Details *</span>
-          <textarea
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            required
-            placeholder="Describe the class"
-            rows={4}
-            className="mt-1 block w-full rounded-md bg-[#222] border border-gray-700 p-2 text-white focus:outline-none focus:border-[#faba22]"
-          ></textarea>
-        </label>
-
-        <label className="block">
-          <span className="text-gray-300">Duration (minutes) *</span>
-          <input
-            type="number"
-            value={durationMinutes}
-            onChange={(e) => setDurationMinutes(e.target.value)}
-            min="1"
-            required
-            placeholder="e.g. 60"
-            className="mt-1 block w-full rounded-md bg-[#222] border border-gray-700 p-2 text-white focus:outline-none focus:border-[#faba22]"
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-gray-300">Difficulty *</span>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            required
-            className="mt-1 block w-full rounded-md bg-[#222] border border-gray-700 p-2 text-white focus:outline-none focus:border-[#faba22]"
-          >
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </label>
-
-        {/* <label className="block">
-          <span className="text-gray-300">
-            Trainer Emails (comma separated)
-          </span>
-          <input
-            type="text"
-            value={trainerEmails}
-            onChange={(e) => setTrainerEmails(e.target.value)}
-            placeholder="trainer1@example.com, trainer2@example.com"
-            className="mt-1 block w-full rounded-md bg-[#222] border border-gray-700 p-2 text-white focus:outline-none focus:border-[#faba22]"
-          />
-        </label> */}
-
-        <label className="block">
-          <span className="text-gray-300">Class Image *</span>
-          {imagePreview ? (
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-full h-48 object-cover rounded-md mb-2"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Class Name */}
+          <div>
+            <label htmlFor="name" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaBook className="inline-block mr-2 text-[#faba22]" /> Class Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Enter class name (e.g., Yoga Flow, HIIT Cardio)"
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
             />
-          ) : (
-            <div className="w-full h-48 bg-gray-700 flex items-center justify-center rounded-md mb-2 text-gray-400">
-              No Image Selected
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            required={!imagePreview}
-            className="w-full text-gray-300 cursor-pointer"
-          />
-        </label>
+          </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-[#faba22] text-black font-semibold rounded-md hover:bg-black hover:text-[#faba22] transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Adding..." : "Add Class"}
-        </button>
-      </form>
+          {/* Details */}
+          <div>
+            <label htmlFor="details" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaInfoCircle className="inline-block mr-2 text-[#faba22]" /> Details <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="details"
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              required
+              placeholder="Provide a detailed description of the class, its benefits, and what participants can expect."
+              rows={5}
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
+            ></textarea>
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label htmlFor="durationMinutes" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaClock className="inline-block mr-2 text-[#faba22]" /> Duration (minutes) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="durationMinutes"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(e.target.value)}
+              min="1"
+              required
+              placeholder="e.g., 60 (for a 1-hour class)"
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+            />
+          </div>
+
+          {/* Difficulty */}
+          <div>
+            <label htmlFor="difficulty" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaChartLine className="inline-block mr-2 text-[#faba22]" /> Difficulty <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="difficulty"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              required
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg appearance-none cursor-pointer"
+            >
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+
+          {/* Trainer Emails (commented out as per original code, but styled for consistency if uncommented) */}
+          {/*
+          <div>
+            <label htmlFor="trainerEmails" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaEnvelope className="inline-block mr-2 text-[#faba22]" /> Trainer Emails (comma separated)
+            </label>
+            <input
+              type="text"
+              id="trainerEmails"
+              value={trainerEmails}
+              onChange={(e) => setTrainerEmails(e.target.value)}
+              placeholder="trainer1@example.com, trainer2@example.com"
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+            />
+          </div>
+          */}
+
+          {/* Class Image */}
+          <div>
+            <label htmlFor="imageFile" className="block text-lg font-medium mb-2 text-zinc-300">
+              <FaImage className="inline-block mr-2 text-[#faba22]" /> Class Image <span className="text-red-500">*</span>
+            </label>
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Class Image Preview"
+                className="w-full h-52 object-cover rounded-lg mb-4 border-2 border-zinc-700 shadow-md"
+              />
+            ) : (
+              <div className="w-full h-52 bg-zinc-800 flex flex-col items-center justify-center rounded-lg mb-4 text-zinc-400 border-2 border-zinc-700">
+                <FaImage className="text-5xl mb-3" />
+                <p className="text-lg">No Image Selected</p>
+              </div>
+            )}
+            <input
+              type="file"
+              id="imageFile"
+              accept="image/*"
+              onChange={handleImageChange}
+              required={!imagePreview}
+              className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Adding...
+              </>
+            ) : (
+              <>
+                <FaPlusCircle size={24} /> Add Class
+              </>
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

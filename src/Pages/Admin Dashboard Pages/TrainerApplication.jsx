@@ -1,8 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Link } from "react-router";
-
+import { NavLink } from "react-router"; 
+import { FaInfoCircle } from 'react-icons/fa';
 const TrainerApplication = () => {
   const { data: applications = [], isLoading, error: fetchError } = useQuery({
     queryKey: ["pendingApplications"],
@@ -14,42 +14,80 @@ const TrainerApplication = () => {
     },
   });
 
-  if (isLoading) return <p className="text-center py-10">Loading Applications...</p>;
-  if (fetchError) return <p className="text-center py-10 text-red-500">Error loading applications</p>;
+  // Loading and Error states UI
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
+        <p className="text-[#faba22] ml-4 text-xl font-inter">Loading Applications...</p>
+      </div>
+    );
+  if (fetchError)
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+        <p className="text-red-500 text-xl font-inter">Error loading applications. Please try again later.</p>
+      </div>
+    );
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Pending Trainer Applications</h1>
+    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16">
+      <h1 className="text-5xl md:text-6xl font-bold font-funnel text-center mb-12 text-[#faba22] drop-shadow-lg">
+        Pending Trainer Applications
+      </h1>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-gray-800 rounded-lg">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-4 py-2">#</th>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.map((app, index) => (
-              <tr key={app._id} className="border-b border-gray-700 hover:bg-gray-700">
-                <td className="px-4 py-2">{index + 1}</td>
-                <td className="px-4 py-2">{app.fullName}</td>
-                <td className="px-4 py-2">{app.email}</td>
-                <td className="px-4 py-2">
-                  <Link
-                    to={`/dashboard/admin/appliedtrainers/${app._id}`}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
-                  >
-                    Details
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {applications.length === 0 ? (
+        <div className="bg-zinc-900 p-8 rounded-xl shadow-lg text-center text-lg mt-8 border border-zinc-800">
+          <p className="text-zinc-300">No pending trainer applications found.</p>
+        </div>
+      ) : (
+        <div className="bg-zinc-900 p-6 sm:p-8 rounded-xl shadow-lg border border-zinc-800">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-zinc-700">
+              <thead className="bg-zinc-800">
+                <tr>
+                  <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tl-lg">
+                    #
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tr-lg">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {applications.map((app, index) => (
+                  <tr key={app._id} className="bg-zinc-900 hover:bg-zinc-800 transition-colors duration-200">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-[#faba22]">
+                      {index + 1}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                      {app.fullName || 'N/A'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
+                      {app.email || 'N/A'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
+                      <NavLink
+                        to={`/dashboard/admin/appliedtrainers/${app._id}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#faba22] hover:bg-yellow-500 text-black rounded-lg font-semibold transition-colors duration-200 shadow-md"
+                        title="View Application Details"
+                      >
+                        <FaInfoCircle size={18} />
+                        Details
+                      </NavLink>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router"; 
+import { useParams, useNavigate } from "react-router";
 import axios from "axios";
 import { IoMdDoneAll } from "react-icons/io";
 import { useAuth } from "../AuthProvider/useAuth";
-import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa"; // Import social icons
+import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 
-// Helper function to determine social icon based on URL
 const getSocialIcon = (url) => {
   if (!url || typeof url !== 'string') return null;
   const lowerUrl = url.toLowerCase();
@@ -28,13 +27,13 @@ const getSocialIcon = (url) => {
 const TrainerDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Auth user from Firebase/Auth
+  const { user } = useAuth();
 
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [trainerApplied, setTrainerApplied] = useState(false); // Status of current user's trainer application
+  const [trainerApplied, setTrainerApplied] = useState(false); // This state will now specifically check for PENDING applications
 
   useEffect(() => {
     const fetchTrainer = async () => {
@@ -85,9 +84,9 @@ const TrainerDetailsPage = () => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`
         );
-        // Check if any application (pending or rejected) exists for the current user
-        const hasApplication = res.data.some((app) => app.email === user.email);
-        setTrainerApplied(hasApplication);
+        // MODIFIED LOGIC: Check if ANY application has a 'pending' status for the current user
+        const hasPendingApplication = res.data.some((app) => app.email === user.email && app.status === "pending");
+        setTrainerApplied(hasPendingApplication);
       } catch (err) {
         console.error("Trainer application check error:", err);
       }
@@ -297,11 +296,11 @@ const TrainerDetailsPage = () => {
           <h2 className="text-3xl font-semibold mb-4 text-white font-funnel">Want to Help Others?</h2>
           <p className="mb-6 text-zinc-300 leading-relaxed">Join our team of certified trainers and share your expertise to inspire and guide our community towards their fitness goals.</p>
 
-          {!trainerApplied ? (
+          {!trainerApplied ? ( // This condition now correctly checks for PENDING applications only
             <button
               onClick={() => navigate("/betrainer")}
               className="px-8 py-4 rounded-xl font-bold text-xl bg-[#faba22] text-black hover:bg-yellow-500
-                         transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                          transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               Become a Trainer
             </button>

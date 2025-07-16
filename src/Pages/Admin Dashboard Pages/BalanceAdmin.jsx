@@ -1,6 +1,8 @@
 import React from "react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'; // Import Recharts components
+import { FaDollarSign, FaUsers, FaChartPie, FaChartBar } from 'react-icons/fa'; // Icons for better UI
 
 const BalanceAdmin = () => {
   const { data, isLoading, isError } = useQuery({
@@ -11,51 +13,128 @@ const BalanceAdmin = () => {
     },
   });
 
-  if (isLoading) return <p className="text-center text-lg">Loading summary...</p>;
-  if (isError) return <p className="text-center text-red-500">Error loading balance summary!</p>;
+  // New query for user statistics
+  const { data: userStats, isLoading: isUserStatsLoading, isError: isUserStatsError } = useQuery({
+    queryKey: ["user-stats"],
+    queryFn: async () => {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/user-stats`);
+      return res.data;
+    },
+  });
+
+  // Overall loading/error states
+  if (isLoading || isUserStatsLoading) return (
+    <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+      <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
+      <p className="text-[#faba22] ml-4 text-xl font-inter">Loading summary and user stats...</p>
+    </div>
+  );
+  if (isError || isUserStatsError) return (
+    <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+      <p className="text-red-500 text-xl font-inter">Error loading balance or user statistics!</p>
+    </div>
+  );
 
   // Filter out deleted trainers
   const activeTrainers = data.trainerBalances.filter((item) => !item.isDeleted);
 
+  // Prepare data for the pie chart
+  const chartData = [
+    { name: 'Newsletter Subscribers', value: userStats.totalNewsletterSubscribers || 0 },
+    { name: 'Paid Members', value: userStats.totalPaidMembers || 0 },
+  ];
+
+  const COLORS = ['#faba22', '#4CAF50']; // Colors for the pie chart segments
+
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
-      {/* Total Balance */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-5">
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Total Balance</h2>
-          <p className="text-3xl font-bold text-primary">${data?.totalBalance?.toFixed(2)}</p>
+    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16">
+      <h1 className="text-5xl md:text-6xl font-bold font-funnel text-center mb-12 text-[#faba22] drop-shadow-lg">
+        Admin Balance & User Overview
+      </h1>
+
+      {/* Total Balance & Active Trainers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div className="bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800 flex flex-col items-center justify-center text-center">
+          <FaDollarSign className="text-[#faba22] text-5xl mb-4" />
+          <h2 className="text-2xl font-semibold mb-2 text-white">Total Balance</h2>
+          <p className="text-4xl font-bold text-[#faba22]">${data?.totalBalance?.toFixed(2)}</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-5">
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Active Trainers</h2>
-          <p className="text-3xl font-bold text-primary">{activeTrainers.length}</p>
+        <div className="bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800 flex flex-col items-center justify-center text-center">
+          <FaUsers className="text-[#faba22] text-5xl mb-4" />
+          <h2 className="text-2xl font-semibold mb-2 text-white">Active Trainers</h2>
+          <p className="text-4xl font-bold text-[#faba22]">{activeTrainers.length}</p>
         </div>
       </div>
 
-      {/* Trainer Balances */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Trainer Balances</h2>
-        <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-lg shadow">
-          <table className="min-w-full text-sm text-gray-700 dark:text-gray-300">
-            <thead className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+      {/* Newsletter Subscribers vs Paid Members Chart */}
+      <div className="bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800 mb-12">
+        <h2 className="text-3xl font-semibold mb-6 text-white text-center flex items-center justify-center gap-3">
+          <FaChartPie className="text-[#faba22]" />
+          User Demographics
+        </h2>
+        <div className="h-80 w-full"> {/* Responsive container for the chart */}
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name" // Use nameKey for tooltip and legend
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ backgroundColor: '#3f3f46', borderColor: '#faba22', borderRadius: '8px', color: '#fff' }}
+                itemStyle={{ color: '#fff' }}
+                formatter={(value, name) => [`${value}`, name]} // Show value and name
+              />
+              <Legend
+                wrapperStyle={{ color: '#fff' }} // Style legend text
+                formatter={(value) => <span style={{ color: '#fff' }}>{value}</span>} // Ensure legend text is white
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Trainer Balances Table */}
+      <div className="bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800 mb-12">
+        <h2 className="text-3xl font-semibold mb-6 text-white text-center">Trainer Balances</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-zinc-700">
+            <thead className="bg-zinc-800">
               <tr>
-                <th className="p-3">Trainer Name</th>
-                <th className="p-3">Trainer Email</th>
-                <th className="p-3">Total Amount</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tl-lg">
+                  Trainer Name
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  Trainer Email
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tr-lg">
+                  Total Amount
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {activeTrainers.map((item) => (
-                <tr key={item.trainerId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <td className="p-3">{item.trainerName}</td>
-                  <td className="p-3">{item.trainerEmail}</td>
-                  <td className="p-3">${item.totalAmount.toFixed(2)}</td>
-                </tr>
-              ))}
-              {activeTrainers.length === 0 && (
+            <tbody className="divide-y divide-zinc-800">
+              {activeTrainers.length > 0 ? (
+                activeTrainers.map((item) => (
+                  <tr key={item.trainerId} className="bg-zinc-900 hover:bg-zinc-800 transition-colors duration-200">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">{item.trainerName || 'N/A'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">{item.trainerEmail || 'N/A'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">${item.totalAmount.toFixed(2)}</td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
-                  <td colSpan="3" className="p-4 text-center text-gray-500 dark:text-gray-400">
-                    No active trainers found.
+                  <td colSpan="3" className="p-4 text-center text-zinc-400 italic">
+                    No active trainers with balances found.
                   </td>
                 </tr>
               )}
@@ -64,26 +143,40 @@ const BalanceAdmin = () => {
         </div>
       </div>
 
-      {/* Last Transactions */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Last 6 Transactions</h2>
-        <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-lg shadow">
-          <table className="min-w-full text-sm text-gray-700 dark:text-gray-300">
-            <thead className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+      {/* Last Transactions Table */}
+      <div className="bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800">
+        <h2 className="text-3xl font-semibold mb-6 text-white text-center">Last 6 Transactions</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-zinc-700">
+            <thead className="bg-zinc-800">
               <tr>
-                <th className="p-3">Trainer Name</th>
-                <th className="p-3">User Email</th>
-                <th className="p-3">Amount</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tl-lg">
+                  Trainer Name
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  User Email
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tr-lg">
+                  Amount
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {data.lastSixTransactions.map((txn) => (
-                <tr key={txn._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <td className="p-3">{txn.trainerName}</td>
-                  <td className="p-3">{txn.userEmail}</td>
-                  <td className="p-3">${Number(txn.packagePrice).toFixed(2)}</td>
+            <tbody className="divide-y divide-zinc-800">
+              {data.lastSixTransactions.length > 0 ? (
+                data.lastSixTransactions.map((txn) => (
+                  <tr key={txn._id} className="bg-zinc-900 hover:bg-zinc-800 transition-colors duration-200">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">{txn.trainerName || 'N/A'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">{txn.userEmail || 'N/A'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">${Number(txn.packagePrice).toFixed(2)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="p-4 text-center text-zinc-400 italic">
+                    No recent transactions found.
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

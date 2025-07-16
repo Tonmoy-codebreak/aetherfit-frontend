@@ -35,6 +35,9 @@ import ForumPostDetails from "../Pages/ForumPostDetails";
 import AddSlot from "../Pages/Trainer Dashboard pages/AddSlot";
 import AddForumTrainer from "../Pages/Trainer Dashboard pages/AddForumTrainer";
 import ManageSlot from "../Pages/Trainer Dashboard pages/ManageSlot";
+import DefaultMember from "../Layouts/DefaultMember";
+import DefaultTrainer from "../Layouts/DefaultTrainer";
+import DefaulltAdmin from "../Layouts/DefaulltAdmin";
 
 const router = createBrowserRouter([
   {
@@ -76,6 +79,7 @@ const router = createBrowserRouter([
         path: "member",
         element: <UserDashboard />,
         children: [
+          {index:true, element: <DefaultMember></DefaultMember>},
           { path: "profile", element: <ProfilePage /> },
           { path: "activity-log", element: <ActivityLogPage /> },
           { path: "booked-trainer", element: <BookedTrainersPage /> },
@@ -86,6 +90,7 @@ const router = createBrowserRouter([
         path: "trainer",
         element: <TrainerDashboard />,
         children: [
+           {index:true, element: <DefaultTrainer></DefaultTrainer>},
           { path: "manageslots", element: <ManageSlot></ManageSlot> },
           { path: "addslot", element: <AddSlot></AddSlot> },
           { path: "addforumbytrainer", element: <AddForumTrainer></AddForumTrainer>}
@@ -95,6 +100,7 @@ const router = createBrowserRouter([
         path: "admin",
         element: <AdminDashboard />,
         children: [
+           {index:true, element: <DefaulltAdmin></DefaulltAdmin>},
           { path: "alltrainers", element: <Alltrainers></Alltrainers> },
           {path:"appliedtrainers" , element: <TrainerApplication></TrainerApplication>},
           { path: "appliedtrainers/:id", element: <TrainerApplicationDetails></TrainerApplicationDetails> },

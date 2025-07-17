@@ -29,6 +29,7 @@
     "stripe": "^18.3.0",
     "sweetalert2": "^11.22.2",
     "sweetalert2-react-content": "^5.1.0",
+    "swiper": "^11.2.10",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {

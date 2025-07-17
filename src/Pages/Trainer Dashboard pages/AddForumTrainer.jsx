@@ -99,6 +99,7 @@ const AddForumTrainer = () => {
       const authorId = mongoUser._id;
       const authorName = authUser?.displayName || mongoUser.name || mongoUser.email; // Use authUser.displayName if available, then mongoUser.name
       const authorRole = "Trainer";
+      const authorEmail = mongoUser.email
 
       await axios.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
         ...newForum,
@@ -106,6 +107,7 @@ const AddForumTrainer = () => {
         authorId,
         authorName,
         authorRole,
+        authorEmail,
       });
 
       setNewForum({ title: "", content: "", image: "" });

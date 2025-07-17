@@ -47,6 +47,9 @@ const CheckoutForm = () => {
       payment_method: { card },
     });
 
+        // Add this line to console log classId
+    console.log("Class ID:", paymentInfo.classId);
+
     if (error) {
       setMessage(error.message);
       setProcessing(false);
@@ -67,6 +70,7 @@ const CheckoutForm = () => {
             userName: user?.name || user?.displayName,
             userEmail: user?.email,
             paymentIntentId: paymentIntent.id,
+            classId: paymentInfo.classId,
           });
 
         // navigate("/dashboard/booked-trainers");

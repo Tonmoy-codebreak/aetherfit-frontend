@@ -108,7 +108,7 @@ const ForumPage = () => {
     return (
       <div className="flex justify-center items-center min-h-screen bg-zinc-950">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
-        <p className="text-[#faba22] ml-4 text-xl">Loading forum posts...</p>
+       
       </div>
     );
   }
@@ -122,7 +122,8 @@ const ForumPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-[#faba22] p-8 sm:p-12 lg:p-16">
+      <div className='bg-zinc-950 lg:pt-24'> 
+         <div className="min-h-screen  text-[#faba22] p-8 sm:p-12 lg:p-16 lg:pt-20  w-9/12 mx-auto">
       <h1 className="text-5xl font-bold font-funnel text-center mb-12 text-white">Community Forum</h1>
 
       {forums.length === 0 ? (
@@ -228,6 +229,7 @@ const ForumPage = () => {
         </>
       )}
     </div>
+      </div> 
   );
 };
 

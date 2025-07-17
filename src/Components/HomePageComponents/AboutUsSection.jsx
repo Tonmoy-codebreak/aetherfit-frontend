@@ -16,7 +16,7 @@ const AboutUsSection = () => {
             <h2 className="text-4xl md:text-5xl font-bold font-funnel mb-6 text-[#faba22]">
               About Us
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-5xl mx-auto">
               AetherFit bridges the gap between those seeking fitness guidance and those ready to share it. 
               Our platform empowers users to grow as trainers or find expert advice through a community-driven 
               ecosystem. Whether you’re offering workout plans, booking sessions, or seeking help on your fitness journey, 

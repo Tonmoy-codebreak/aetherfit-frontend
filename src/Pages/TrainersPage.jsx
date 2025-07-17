@@ -31,7 +31,7 @@ const AllTrainersPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-[#faba22] p-6 md:p-10 lg:p-16">
-      <h1 className="text-4xl md:text-5xl font-bold text-center mb-12 text-white">Our Certified Trainers</h1>
+      <h1 className="text-4xl md:text-5xl font-bold text-center mb-12 font-funnel pt-10 text-white">Our Certified Trainers</h1>
       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 max-w-7xl mx-auto">
         {trainers.map(({ _id, photoURL, fullName, name, expertise = [], skills = [], yearsOfExperience = 0, socialLinks = [], slots = [] }) => {
           const displayName = fullName || name || "Unnamed Trainer";

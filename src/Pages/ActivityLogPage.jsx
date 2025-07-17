@@ -70,7 +70,7 @@ const ActivityLogPage = () => {
               >
                 <div className="flex-grow text-center sm:text-left mb-4 sm:mb-0">
                   <h2 className="text-2xl font-semibold text-white tracking-wide leading-tight">
-                    {app.fullName || "Unknown Name"}
+                    {app.fullName || "From Admin"}
                   </h2>
                   <p className="text-base text-zinc-400 truncate mt-1">{app.email}</p>
                   <p

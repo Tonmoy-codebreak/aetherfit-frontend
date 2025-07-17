@@ -56,9 +56,9 @@ const router = createBrowserRouter([
       { path: "classes", element: <AllClassesPage /> },
       { path: "trainers", element: <TrainersPage /> },
       { path: "trainers/:id", element: <TrainerDetailsPage /> },
-      { path: "betrainer", element: <BeTrainerPage /> },
-      { path: "booking/:trainerId/:day/:time", element: <TrainerBookingPage /> },
-      { path: "payment", element: <PaymentPage /> },
+      { path: "betrainer", element:<PrivateRoute> <BeTrainerPage /> </PrivateRoute>},
+      { path: "booking/:trainerId/:day/:time", element: <PrivateRoute><TrainerBookingPage /></PrivateRoute>    },
+      { path: "payment", element:  <PrivateRoute> <PaymentPage /></PrivateRoute>},
       { path: "forum", element: <ForumPage /> },
       { path: "forum/:id", element:<ForumPostDetails></ForumPostDetails> }
     ],
@@ -73,7 +73,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <PrivateRoute>  <DashboardLayout /></PrivateRoute>,
     children: [
       {
         path: "member",

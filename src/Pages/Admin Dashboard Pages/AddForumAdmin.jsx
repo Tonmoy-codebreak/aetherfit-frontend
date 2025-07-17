@@ -289,8 +289,8 @@ const AddForumAdmin = () => {
                   className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
                 />
               </div>
-              {/* Removed Content UI as per user request */}
-              {/* <div>
+             
+              <div>
                 <label htmlFor="modal-content" className="block text-lg font-medium mb-2 text-zinc-300">Content <span className="text-red-500">*</span></label>
                 <textarea
                   id="modal-content"
@@ -302,7 +302,7 @@ const AddForumAdmin = () => {
                   rows={6}
                   className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
                 ></textarea>
-              </div> */}
+              </div>
 
               <div>
                 <label htmlFor="modal-image" className="block text-lg font-medium mb-2 text-zinc-300">Image (Optional)</label>

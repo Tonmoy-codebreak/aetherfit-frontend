@@ -2,22 +2,25 @@ import React from "react";
 import { Link } from "react-router";
 import { FaDumbbell, FaUsers, FaChartLine } from "react-icons/fa";
 import { MdOutlineArrowOutward } from "react-icons/md";
+import { MdForum } from "react-icons/md";
+import { RxAvatar } from "react-icons/rx";
+import { MdOutlineClass } from "react-icons/md";
 
-// Extended features array to include icons
+
 const features = [
   {
     title: "Your Profile",
     description:
       "Customize your journey: track personal progress, update fitness preferences, set milestones, and see your achievements all in one place.",
     link: "/profile",
-    icon: FaDumbbell, // Icon for personal fitness/profile
+    icon: RxAvatar, // Icon for personal fitness/profile
   },
   {
     title: "Explore Classes",
     description:
       "Access a wide range of classes from beginner to advanced. Filter by trainer, intensity, or focus area to find your perfect session.",
     link: "/classes",
-    icon: FaChartLine, // Icon for progress/variety in classes
+    icon: MdOutlineClass, // Icon for progress/variety in classes
   },
   {
     title: "Meet Our Trainers",
@@ -31,7 +34,7 @@ const features = [
     description:
       "Join discussions, share your experiences, ask questions, and get valuable insights from a supportive fitness community.",
     link: "/forum",
-    icon: FaUsers, // Icon for community/discussions
+    icon: MdForum, // Icon for community/discussions
   },
   {
     title: "Smart Fitness Tracking",

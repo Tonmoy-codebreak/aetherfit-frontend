@@ -49,7 +49,7 @@ const LatestPost = () => {
     }
 
     return (
-        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 pt-36 pb-20 font-sans">
             <div className="max-w-7xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-semibold font-funnel text-[#faba22] text-center mb-12 drop-shadow-lg">
                     Latest Community Posts

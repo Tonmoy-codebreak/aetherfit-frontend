@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from "react";
-
 import Swal from "sweetalert2";
 import { IoEye } from "react-icons/io5";
 import { useNavigate } from "react-router";
-import { FaPlus, FaTrashAlt, FaTimes, FaRegThumbsUp } from 'react-icons/fa';
+import { FaPlus, FaTrashAlt, FaTimes } from "react-icons/fa";
 import useAxios from "../../hooks/useAxios";
 
 const AddForumAdmin = () => {
   const axiosSecure = useAxios();
   const [forums, setForums] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newForum, setNewForum] = useState({
-    title: "",
-    content: "",
-    image: "",
-  });
-
+  const [newForum, setNewForum] = useState({ title: "", image: "" });
   const [photoFile, setPhotoFile] = useState(null);
   const [previewURL, setPreviewURL] = useState("");
-  const [imageSize, setImageSize] = useState(0); // New state for image size in bytes
+  const [imageSize, setImageSize] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     fetchForums();
@@ -31,10 +32,9 @@ const AddForumAdmin = () => {
       const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/admin/forums`);
       setForums(res.data);
     } catch (err) {
-      console.error("Error fetching forums:", err);
       Swal.fire({
         title: '<span style="color:#faba22">Error</span>',
-        text: "Failed to load forums. Please try again later.",
+        text: err.response?.data?.message || "Failed to load forums.",
         icon: "error",
         background: "black",
         color: "#faba22",
@@ -51,7 +51,7 @@ const AddForumAdmin = () => {
     const file = e.target.files[0];
     setPhotoFile(file);
     setPreviewURL(file ? URL.createObjectURL(file) : "");
-    setImageSize(file ? file.size : 0); // Set the image size in bytes
+    setImageSize(file ? file.size : 0);
   };
 
   const toBase64 = (file) =>
@@ -68,44 +68,48 @@ const AddForumAdmin = () => {
 
     try {
       let finalImageURL = newForum.image;
-
       if (photoFile) {
+        if (imageSize > 2 * 1024 * 1024) {
+          Swal.fire({
+            icon: "error",
+            title: '<span style="color:#faba22">Image Too Large!</span>',
+            text: "Image size cannot be more than 2MB.",
+            background: "black",
+            color: "#faba22",
+            confirmButtonColor: "#faba22",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
         const base64Image = await toBase64(photoFile);
         const uploadRes = await axiosSecure.post(
           `${import.meta.env.VITE_API_URL}/upload-image`,
-          {
-            imageBase64: base64Image,
-          },
-          {
-            timeout: 30000
-          }
+          { imageBase64: base64Image },
+          { timeout: 30000 }
         );
         finalImageURL = uploadRes.data.url || finalImageURL;
       }
 
-      const authorId = "admin123";
-      const authorName = "Admin User";
-      const authorRole = "Admin";
-
       await axiosSecure.post(
         `${import.meta.env.VITE_API_URL}/admin/forums`,
         {
-          ...newForum,
+          title: newForum.title,
           image: finalImageURL,
-          authorId,
-          authorName,
-          authorRole,
+          authorId: "admin123",
+          authorName: "Admin User",
+          authorRole: "Admin",
         },
-        {
-          timeout: 30000
-        }
+        { timeout: 30000 }
       );
 
-      setNewForum({ title: "", content: "", image: "" });
+      setNewForum({ title: "", image: "" });
       setPhotoFile(null);
       setPreviewURL("");
-      setImageSize(0); // Reset image size after successful upload
+      setImageSize(0);
       setIsModalOpen(false);
+      fetchForums();
+
       Swal.fire({
         title: '<span style="color:#faba22">Forum Added!</span>',
         text: "Your forum post has been submitted.",
@@ -114,10 +118,7 @@ const AddForumAdmin = () => {
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
-
-      fetchForums();
     } catch (err) {
-      console.error("Forum add error:", err);
       Swal.fire({
         title: '<span style="color:#faba22">Error</span>',
         text: err.response?.data?.message || err.message || "Something went wrong.",
@@ -147,6 +148,7 @@ const AddForumAdmin = () => {
     if (result.isConfirmed) {
       try {
         await axiosSecure.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
+        fetchForums();
         Swal.fire({
           title: '<span style="color:#faba22">Deleted!</span>',
           text: "Forum has been deleted.",
@@ -155,9 +157,7 @@ const AddForumAdmin = () => {
           color: "#faba22",
           confirmButtonColor: "#faba22",
         });
-        fetchForums();
       } catch (error) {
-        console.error("Delete forum error:", error);
         Swal.fire({
           title: '<span style="color:#faba22">Error</span>',
           text: error.response?.data?.message || error.message || "Failed to delete forum.",
@@ -170,104 +170,60 @@ const AddForumAdmin = () => {
     }
   };
 
-  // Helper function to format bytes into readable units (KB, MB)
-  const formatBytes = (bytes, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  };
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
-        <h1 className="text-5xl md:text-6xl font-bold font-funnel text-center sm:text-left text-[#faba22] drop-shadow-lg">
+    <div className="min-h-screen bg-zinc-950 text-white font-inter p-4 sm:p-8 lg:p-16">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-funnel text-center sm:text-left text-[#faba22]">
           All Forums
         </h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-8 py-4 bg-[#faba22] hover:bg-yellow-500 text-black font-bold text-xl rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
+          className="px-6 py-3 bg-[#faba22] hover:bg-yellow-500 text-black font-bold text-lg rounded-xl transition-all duration-300 flex items-center gap-2"
         >
           <FaPlus size={20} /> Add New Forum
         </button>
       </div>
 
       {forums.length === 0 ? (
-        <div className="bg-zinc-900 p-8 rounded-xl shadow-lg text-center text-lg mt-8 border border-zinc-800">
+        <div className="bg-zinc-900 p-8 rounded-xl text-center mt-8 border border-zinc-800">
           <p className="text-zinc-300">No forums found. Start by adding a new one!</p>
         </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl shadow-lg border border-zinc-800 bg-zinc-900">
-          <table className="min-w-full divide-y divide-zinc-700">
+      ) : windowWidth >= 1024 ? (
+        <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900">
+          <table className="min-w-full text-xs sm:text-sm">
             <thead className="bg-zinc-800">
               <tr>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tl-lg">
-                  Title
-                </th>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                  Content
-                </th>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                  Image
-                </th>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                  Author
-                </th>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                  Votes
-                </th>
-                <th scope="col" className="px-4 py-4 text-left text-xs sm:text-sm font-medium text-zinc-400 uppercase tracking-wider rounded-tr-lg">
-                  Actions
-                </th>
+                <th className="px-3 py-3 text-left text-zinc-400 uppercase tracking-wider">Title</th>
+                <th className="px-3 py-3 text-left text-zinc-400 uppercase tracking-wider">Image</th>
+                <th className="px-3 py-3 text-left text-zinc-400 uppercase tracking-wider">Author</th>
+                <th className="px-3 py-3 text-left text-zinc-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800">
+            <tbody>
               {forums.map((forum) => (
-                <tr key={forum._id} className="bg-zinc-900 hover:bg-zinc-800 transition-colors duration-200">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">
-                    {forum.title}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-zinc-300">
-                    {forum.content.slice(0, 70)}{forum.content.length > 70 ? '...' : ''}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
+                <tr key={forum._id} className="bg-zinc-900 hover:bg-zinc-800">
+                  <td className="px-3 py-3 truncate">{forum.title}</td>
+                  <td className="px-3 py-3">
                     {forum.image ? (
                       <img
                         src={forum.image}
                         alt="Forum"
-                        className="w-20 h-14 object-cover rounded-lg border border-zinc-700"
-                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/80x56/363636/DDDDDD?text=No+Img"; }}
+                        className="w-16 h-12 object-cover rounded-lg"
                       />
                     ) : (
                       <span className="text-zinc-500">N/A</span>
                     )}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
-                    {forum.authorName || 'N/A'} ({forum.authorRole || 'N/A'})
+                  <td className="px-3 py-3 truncate">
+                    {forum.authorName || "N/A"} ({forum.authorRole || "N/A"})
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300 gap-1">
-                    <span className="flex items-center  gap-1 text-green-400">
-                      <FaRegThumbsUp /> {forum.totalUpVotes || 0}
-                    </span>
-
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleDelete(forum._id)}
-                        className="p-2 bg-red-700 hover:bg-red-800 text-white rounded-full transition-colors duration-200 shadow-md"
-                        title="Delete Forum"
-                      >
-                        <FaTrashAlt size={18} />
+                  <td className="px-3 py-3">
+                    <div className="flex gap-2">
+                      <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full">
+                        <FaTrashAlt size={12} />
                       </button>
-                      <button
-                        onClick={() => navigate(`/forum/${forum._id}`)}
-                        className="p-2 bg-[#faba22] hover:bg-yellow-500 text-black rounded-full transition-colors duration-200 shadow-md"
-                        title="View Forum Details"
-                      >
-                        <IoEye size={18} />
+                      <button onClick={() => navigate(`/forum/${forum._id}`)} className="p-2 bg-[#faba22] text-black rounded-full">
+                        <IoEye size={12} />
                       </button>
                     </div>
                   </td>
@@ -276,106 +232,57 @@ const AddForumAdmin = () => {
             </tbody>
           </table>
         </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {forums.map((forum) => (
+            <div key={forum._id} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 flex flex-col">
+              <div className="flex justify-between items-center">
+                <span className="font-bold">{forum.title}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full">
+                    <FaTrashAlt size={12} />
+                  </button>
+                  <button onClick={() => navigate(`/forum/${forum._id}`)} className="p-2 bg-[#faba22] text-black rounded-full">
+                    <IoEye size={12} />
+                  </button>
+                </div>
+              </div>
+              {forum.image && (
+                <img
+                  src={forum.image}
+                  alt="Forum"
+                  className="w-full h-32 object-cover rounded-lg mt-2"
+                />
+              )}
+              <div className="text-sm text-zinc-400 mt-2">
+                {forum.authorName || "N/A"} ({forum.authorRole || "N/A"})
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Add New Forum Modal */}
       {isModalOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in"
-          onClick={() => setIsModalOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-forum-modal-title"
-        >
-          <div
-            className="bg-zinc-900 rounded-2xl max-w-lg w-full p-8 relative shadow-2xl border border-zinc-700 transform scale-95 animate-scale-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-[#faba22] text-3xl font-bold leading-none focus:outline-none transition-colors duration-200"
-              aria-label="Close add forum modal"
-            >
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-zinc-900 max-w-md w-full p-6 rounded-xl border border-zinc-700 relative">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-3 right-3 text-zinc-400 hover:text-[#faba22] text-2xl">
               <FaTimes />
             </button>
-            <h2 id="add-forum-modal-title" className="text-3xl font-bold font-funnel mb-8 text-[#faba22] text-center">
-              Add New Forum Post
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="modal-title" className="block text-lg font-medium mb-2  text-zinc-300">Title <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  id="modal-title"
-                  name="title"
-                  value={newForum.title}
-                  onChange={handleInputChange}
-                  placeholder="Enter forum title"
-                  required
-                  className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="modal-content" className="block text-lg font-medium mb-2 text-zinc-300">Content <span className="text-red-500">*</span></label>
-                <textarea
-                  id="modal-content"
-                  name="content"
-                  value={newForum.content}
-                  onChange={handleInputChange}
-                  placeholder="Write your forum post content here..."
-                  required
-                  rows={6}
-                  className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
-                ></textarea>
-              </div>
-
-              <div>
-                <label htmlFor="modal-image" className="block text-lg font-medium mb-2 text-zinc-300">Image (Max 2MB Recommended)</label>
-                {previewURL && (
-                  <div className="mb-4 flex justify-center">
-                    <img
-                      src={previewURL}
-                      alt="Image Preview"
-                      className="w-48 h-32 object-cover rounded-lg border-2 border-zinc-700 shadow-md"
-                    />
-                  </div>
-                )}
-                <input
-                  type="file"
-                  id="modal-image"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
-                />
-                {imageSize > 0 && ( // Display size only if an image is selected
-                  <p className="text-sm text-zinc-400 mt-2 text-center">
-                    Selected Image Size: <span className={`font-semibold ${imageSize > 2 * 1024 * 1024 ? 'text-red-400' : 'text-green-400'}`}>
-                      {formatBytes(imageSize)}
-                    </span>
-                    {imageSize > 2 * 1024 * 1024 && (
-                      <span className="text-red-400 ml-2"> (Image is too large!)</span>
-                    )}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Submitting...
-                  </>
-                ) : (
-                  'Post Forum'
-                )}
+            <h2 className="text-2xl font-bold text-center text-[#faba22] mb-4">Add New Forum Post</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="title"
+                value={newForum.title}
+                onChange={handleInputChange}
+                required
+                placeholder="Forum title"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+              />
+              {previewURL && <img src={previewURL} alt="Preview" className="w-full max-h-40 object-cover rounded-lg" />}
+              <input type="file" accept="image/*" onChange={handlePhotoChange} className="w-full" />
+              <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-[#faba22] text-black rounded-xl font-bold">
+                {isSubmitting ? "Submitting..." : "Post Forum"}
               </button>
             </form>
           </div>

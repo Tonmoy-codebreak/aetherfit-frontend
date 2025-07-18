@@ -23,7 +23,7 @@ const daysOptions = [
     { value: "Sat", label: "Sat" },
 ];
 
-// Social platforms (unchanged logic)
+// Social platforms (unchanged logic - though not used in this component, keeping it as per original)
 const socialPlatforms = [
     { value: "Facebook", label: "Facebook" },
     { value: "Instagram", label: "Instagram" },
@@ -68,7 +68,7 @@ const AddSlot = () => {
                 totalHours -= 12;
             }
             if (hour !== 12 && totalHours === 12) {
-            } else if (totalHours > 12) {
+             } else if (totalHours > 12) {
                 totalHours -= 12;
             }
         }
@@ -107,7 +107,7 @@ const AddSlot = () => {
         };
 
         fetchTrainerDataAndClasses();
-    }, [user,axiosSecure]);
+    }, [user, axiosSecure]);
 
     // Input change handlers (unchanged)
     const handleInputChange = (e) => {
@@ -174,13 +174,13 @@ const AddSlot = () => {
         }
     };
 
-    // Helper for social platforms (unchanged)
+    // Helper for social platforms (unchanged - though not used in this component, keeping it as per original)
     const getAvailableSocialPlatforms = (currentIndex) => {
+        // This function is not used in this component's current state, but kept to match original structure.
+        // It would typically be used if social links were part of the form.
         return socialPlatforms.map((platform) => ({
             ...platform,
-            isDisabled: formData.socialLinks.some(
-                (link, idx) => idx !== currentIndex && link.platform === platform.value
-            ),
+            isDisabled: false, // Assuming no socialLinks in formData for this component
         }));
     };
 
@@ -269,9 +269,9 @@ const AddSlot = () => {
                 </h1>
 
                 {/* Trainer Information Section */}
-                <div className="bg-zinc-800 p-8 rounded-xl shadow-inner border border-zinc-700 mb-10">
-                    <h2 className="text-3xl font-semibold mb-6 text-white">Trainer Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700 mb-10"> {/* Adjusted padding */}
+                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Trainer Information</h2> {/* Adjusted font size */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-base sm:text-lg"> {/* Responsive grid and font size */}
                         <div>
                             <label className="block text-zinc-300 font-medium mb-1">Email</label>
                             <input type="text" value={trainerData.email || 'N/A'} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
@@ -280,23 +280,23 @@ const AddSlot = () => {
                             <label className="block text-zinc-300 font-medium mb-1">Years of Experience</label>
                             <input type="text" value={`${trainerData.yearsOfExperience || '0'} years`} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="sm:col-span-2"> {/* Span full width on small screens too */}
                             <label className="block text-zinc-300 font-medium mb-1">Skills</label>
                             <input type="text" value={trainerData.skills?.join(', ') || 'N/A'} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
                         </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-zinc-300 font-medium mb-1">Bio</label>
-                            <textarea value={trainerData.bio || 'No bio available.'} readOnly rows="3" className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed resize-none border border-zinc-600"></textarea>
+                        <div className="sm:col-span-2"> {/* Always visible, spans full width */}
+                            <label className="block text-white font-medium mb-1">Bio</label>
+                            <textarea value={trainerData.bio || 'No bio available.'} readOnly rows="3" className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-100 cursor-not-allowed resize-none border border-zinc-600"></textarea>
                         </div>
                     </div>
                 </div>
 
                 {/* Add New Slot Form Section */}
-                <div className="bg-zinc-800 p-8 rounded-xl shadow-inner border border-zinc-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-white">Add New Slot Form</h2>
-                    <form onSubmit={handleSubmit} className="space-y-8"> {/* Increased space-y */}
+                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700"> {/* Adjusted padding */}
+                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Add New Slot Form</h2> {/* Adjusted font size */}
+                    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8"> {/* Responsive vertical spacing */}
                         <div>
-                            <label htmlFor="slotName" className="block text-lg font-medium mb-2 text-zinc-300">Slot Name</label>
+                            <label htmlFor="slotName" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Name</label> {/* Responsive font size */}
                             <input
                                 type="text"
                                 id="slotName"
@@ -304,13 +304,13 @@ const AddSlot = () => {
                                 value={formData.slotName}
                                 onChange={handleInputChange}
                                 placeholder="e.g., Morning Strength Slot"
-                                className="w-full px-5 py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-lg"
+                                className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg" /* Responsive padding and font size */
                                 required
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="selectedDay" className="block text-lg font-medium mb-2 text-zinc-300">Select Day</label>
+                            <label htmlFor="selectedDay" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Select Day</label> {/* Responsive font size */}
                             <Select
                                 id="selectedDay"
                                 name="selectedDay"
@@ -320,12 +320,13 @@ const AddSlot = () => {
                                 placeholder="Select an available day"
                                 classNamePrefix="react-select"
                                 required
+                                // Custom styles are already defined in <style> tag to be responsive
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="slotDuration" className="block text-lg font-medium mb-2 text-zinc-300">Slot Duration</label>
-                            <div className="flex items-center gap-4"> {/* Increased gap */}
+                            <label htmlFor="slotDuration" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Duration</label> {/* Responsive font size */}
+                            <div className="flex items-center gap-3 sm:gap-4"> {/* Responsive gap */}
                                 <input
                                     type="number"
                                     id="slotDuration"
@@ -334,17 +335,17 @@ const AddSlot = () => {
                                     onChange={handleInputChange}
                                     min="1"
                                     placeholder="e.g., 1"
-                                    className="w-28 px-5 py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-lg"
+                                    className="w-24 sm:w-28 px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg" /* Responsive width, padding and font size */
                                     required
                                 />
-                                <span className="text-xl font-medium text-zinc-300">hour(s)</span> {/* Larger text */}
+                                <span className="text-base sm:text-xl font-medium text-zinc-300">hour(s)</span> {/* Responsive font size */}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> {/* Increased gap */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8"> {/* Responsive grid and gap */}
                             <div>
-                                <label className="block text-lg font-medium mb-2 text-zinc-300">Start Time</label>
-                                <div className="flex gap-4"> {/* Increased gap */}
+                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Start Time</label> {/* Responsive font size */}
+                                <div className="flex flex-col md:flex  gap-3 md:gap-4">
                                     <Select
                                         options={hourOptions}
                                         value={formData.startTimeHour}
@@ -364,18 +365,18 @@ const AddSlot = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-lg font-medium mb-2 text-zinc-300">End Time (Auto-calculated)</label>
+                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">End Time (Auto-calculated)</label> {/* Responsive font size */}
                                 <input
                                     type="text"
                                     value={timeRange || 'Select start time and duration'}
                                     readOnly
-                                    className="w-full px-5 py-4 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600 text-lg"
+                                    className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600 text-base sm:text-lg" /* Responsive padding and font size */
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="selectedClass" className="block text-lg font-medium mb-2 text-zinc-300">Class to include</label>
+                            <label htmlFor="selectedClass" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Class to include</label> {/* Responsive font size */}
                             <Select
                                 id="selectedClass"
                                 name="selectedClass"
@@ -390,9 +391,9 @@ const AddSlot = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl
-                                         hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl
-                                         transform hover:-translate-y-1"
+                            className="w-full py-3 sm:py-4 rounded-xl bg-[#faba22] text-black font-bold text-lg sm:text-xl
+                                       hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl
+                                       transform hover:-translate-y-1" /* Responsive padding and font size */
                         >
                             Add Slot
                         </button>

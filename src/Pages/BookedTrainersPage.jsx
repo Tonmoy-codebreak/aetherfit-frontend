@@ -1,36 +1,42 @@
 import React, { useState, useEffect } from "react";
-
 import { useAuth } from "../AuthProvider/useAuth";
 import { useQuery, useQueries } from "@tanstack/react-query";
-import StarRatings from "react-star-ratings"; // Ensure this library is installed
-import { FaCalendarAlt, FaDumbbell, FaDollarSign, FaUserCircle, FaEnvelope, FaStar } from 'react-icons/fa'; // Importing icons for better visuals
+import StarRatings from "react-star-ratings";
+import {
+  FaCalendarAlt,
+  FaDumbbell,
+  FaDollarSign,
+  FaUserCircle,
+  FaEnvelope,
+  FaStar,
+} from "react-icons/fa";
 import useAxios from "../hooks/useAxios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Fetch user's reviews for all trainers
-const fetchUserReviews = async (userEmail , axiosSecure) => {
+const fetchUserReviews = async (userEmail, axiosSecure) => {
   const { data } = await axiosSecure.get(`${API_URL}/trainer-reviews`, {
     params: { reviewerEmail: userEmail },
   });
   return data;
 };
 
-const fetchBookingLogs = async (userEmail , axiosSecure) => {
+const fetchBookingLogs = async (userEmail, axiosSecure) => {
   const { data } = await axiosSecure.get(`${API_URL}/booking-logs`, {
     params: { userEmail },
   });
   return data;
 };
 
-const fetchTrainerById = async (trainerId , axiosSecure) => {
+const fetchTrainerById = async (trainerId, axiosSecure) => {
   const { data } = await axiosSecure.get(`${API_URL}/trainers/${trainerId}`);
   return data;
 };
 
 const BookedTrainersPage = () => {
   const { user } = useAuth();
-const axiosSecure = useAxios()
+  const axiosSecure = useAxios();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTrainerEmail, setCurrentTrainerEmail] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
@@ -38,22 +44,18 @@ const axiosSecure = useAxios()
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(null);
-
-  // Track trainer emails already reviewed by the user
   const [reviewedTrainers, setReviewedTrainers] = useState(new Set());
 
-  // Fetch user reviews once
   const {
     data: userReviews = [],
     isLoading: reviewsLoading,
     isError: reviewsError,
   } = useQuery({
     queryKey: ["userReviews", user?.email],
-    queryFn: () => fetchUserReviews(user.email , axiosSecure),
+    queryFn: () => fetchUserReviews(user.email, axiosSecure),
     enabled: !!user?.email,
   });
 
-  // Update reviewed trainers set when userReviews changes
   useEffect(() => {
     if (userReviews && userReviews.length > 0) {
       const reviewedEmails = new Set(userReviews.map((r) => r.trainerEmail));
@@ -67,19 +69,18 @@ const axiosSecure = useAxios()
     isError: bookingsError,
   } = useQuery({
     queryKey: ["bookingLogs", user?.email],
-    queryFn: () => fetchBookingLogs(user.email , axiosSecure),
+    queryFn: () => fetchBookingLogs(user.email, axiosSecure),
     enabled: !!user?.email,
   });
 
   const trainersQueries = useQueries({
     queries: (bookings || []).map((booking) => ({
       queryKey: ["trainer", booking.trainerId],
-      queryFn: () => fetchTrainerById(booking.trainerId , axiosSecure),
+      queryFn: () => fetchTrainerById(booking.trainerId, axiosSecure),
       enabled: !!booking.trainerId,
     })),
   });
 
-  // --- UI Logic for Loading/Error/Empty States (No change to core logic) ---
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
@@ -94,7 +95,9 @@ const axiosSecure = useAxios()
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
-        <p className="text-center ml-4 text-white text-xl font-inter">Loading your bookings...</p>
+        <p className="text-center ml-4 text-white text-xl font-inter">
+          Loading your bookings...
+        </p>
       </div>
     );
   }
@@ -118,8 +121,6 @@ const axiosSecure = useAxios()
       </div>
     );
   }
-  // --- End UI Logic for Loading/Error/Empty States ---
-
 
   const openReviewModal = (trainerEmail) => {
     setCurrentTrainerEmail(trainerEmail);
@@ -153,14 +154,12 @@ const axiosSecure = useAxios()
       });
 
       setSubmitSuccess("Review submitted successfully!");
-
-      // Update the reviewed trainers set locally to disable button immediately
       setReviewedTrainers((prev) => new Set(prev).add(currentTrainerEmail));
 
       setTimeout(() => {
         setIsModalOpen(false);
       }, 1500);
-    } catch (error) {
+    } catch {
       setSubmitError("Failed to submit review. Try again later.");
     } finally {
       setSubmitLoading(false);
@@ -169,16 +168,15 @@ const axiosSecure = useAxios()
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-inter px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-      <div className="max-w-5xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-8 md:p-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-10 font-funnel drop-shadow-lg">
+      <div className="max-w-5xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-5 sm:p-8 md:p-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-8 font-funnel drop-shadow-lg">
           Your Booked Trainers
         </h1>
 
-        <div className="space-y-8"> {/* Increased spacing between booking cards */}
+        <div className="space-y-8">
           {bookings.map((booking, index) => {
             const trainerQuery = trainersQueries[index];
             const trainer = trainerQuery?.data;
-
             const hasReviewed = trainer
               ? reviewedTrainers.has(trainer.email)
               : false;
@@ -186,7 +184,7 @@ const axiosSecure = useAxios()
             return (
               <div
                 key={booking._id}
-                className="bg-zinc-800 rounded-xl p-7 shadow-lg border border-zinc-700 transition-all duration-300 hover:shadow-yellow-500/30 hover:border-[#faba22] transform hover:-translate-y-1"
+                className="bg-zinc-800 rounded-xl p-5 sm:p-6 shadow-lg border border-zinc-700 transition-all duration-300 hover:shadow-yellow-500/30 hover:border-[#faba22] transform hover:-translate-y-1"
               >
                 {trainerQuery?.isLoading ? (
                   <div className="flex items-center justify-center p-4">
@@ -194,51 +192,89 @@ const axiosSecure = useAxios()
                     <p className="ml-3 text-zinc-400">Loading trainer info...</p>
                   </div>
                 ) : trainer ? (
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-6 pb-6 border-b border-zinc-700">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-6 mb-6 pb-6 border-b border-zinc-700">
                     <img
-                      src={trainer.photoURL || "https://placehold.co/100x100/363636/DDDDDD?text=No+Photo"}
+                      src={
+                        trainer.photoURL ||
+                        "https://placehold.co/100x100/363636/DDDDDD?text=No+Photo"
+                      }
                       alt={trainer.name || "Trainer"}
-                      className="w-28 h-28 rounded-full object-cover border-4 border-[#faba22] shadow-md flex-shrink-0"
-                      onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/100x100/363636/DDDDDD?text=No+Photo"; }}
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-[#faba22] shadow-md"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://placehold.co/100x100/363636/DDDDDD?text=No+Photo";
+                      }}
                     />
-                    <div className="text-center sm:text-left flex-grow">
-                      <h2 className="text-3xl font-semibold text-white mb-1">{trainer.name || "Unknown Trainer"}</h2>
-                      <p className="italic text-zinc-400 text-lg mb-2">{trainer.expertise || trainer.skills?.join(", ") || "No expertise listed"}</p>
-                      <p className="text-zinc-300 text-base mb-1">
-                        <span className="font-semibold text-[#faba22]">Experience:</span> {trainer.yearsOfExperience || "N/A"} years
+                    <div className="text-center md:text-left w-full">
+                      <h2 className="text-2xl sm:text-3xl font-semibold mb-2">
+                        {trainer.name || "Unknown Trainer"}
+                      </h2>
+                      <p className="italic text-zinc-400 text-base sm:text-lg mb-2">
+                        {trainer.expertise ||
+                          trainer.skills?.join(", ") ||
+                          "No expertise listed"}
                       </p>
-                      <p className="text-zinc-300 text-base leading-relaxed">{trainer.bio || "No biography available."}</p>
+                      <p className="text-zinc-300 text-sm sm:text-base mb-1">
+                        <span className="font-semibold text-[#faba22]">
+                          Experience:
+                        </span>{" "}
+                        {trainer.yearsOfExperience || "N/A"} years
+                      </p>
+                      <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+                        {trainer.bio || "No biography available."}
+                      </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-center text-red-400 p-4">Trainer info not found for this booking.</p>
+                  <p className="text-center text-red-400 p-4">
+                    Trainer info not found for this booking.
+                  </p>
                 )}
 
-                {/* Booking Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-zinc-300 text-lg">
-                  <p className="flex items-center gap-2">
-                    <FaDumbbell className="text-[#faba22]" />
-                    <span className="font-semibold text-[#faba22]">Class:</span>{" "}
+                <div className="flex flex-col gap-4 text-zinc-300 text-base sm:text-lg">
+                  <p className="flex flex-col gap-1 sm:flex-row sm:items-center">
+                    <span className="flex items-center gap-2">
+                      <FaDumbbell className="text-[#faba22]" />
+                      <span className="font-semibold text-[#faba22]">
+                        Class:
+                      </span>
+                    </span>
                     {booking.className || "N/A"}
                   </p>
-                  <p className="flex items-center gap-2">
-                    <FaStar className="text-[#faba22]" />
-                    <span className="font-semibold text-[#faba22]">Package:</span>{" "}
-                    {booking.packageName} (<FaDollarSign className="inline-block text-[#faba22] text-xl" />{booking.packagePrice})
+                  <p className="flex flex-col gap-1 sm:flex-row sm:items-center">
+                    <span className="flex items-center gap-2">
+                      <FaStar className="text-[#faba22]" />
+                      <span className="font-semibold text-[#faba22]">
+                        Package:
+                      </span>
+                    </span>
+                    {booking.packageName}{" "}
+                    <span className="flex items-center gap-1">
+                      (<FaDollarSign className="text-[#faba22]" />
+                      {booking.packagePrice})
+                    </span>
                   </p>
-                  <p className="flex items-center gap-2">
-                    <FaCalendarAlt className="text-[#faba22]" />
-                    <span className="font-semibold text-[#faba22]">Slot:</span>{" "}
+                  <p className="flex flex-col gap-1 sm:flex-row sm:items-center">
+                    <span className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-[#faba22]" />
+                      <span className="font-semibold text-[#faba22]">
+                        Slot:
+                      </span>
+                    </span>
                     {booking.slotDay}, {booking.slotTime}
                   </p>
-                  <p className="flex items-center gap-2">
-                    <FaCalendarAlt className="text-[#faba22]" />
-                    <span className="font-semibold text-[#faba22]">Booked On:</span>{" "}
+                  <p className="flex flex-col gap-1 sm:flex-row sm:items-center">
+                    <span className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-[#faba22]" />
+                      <span className="font-semibold text-[#faba22]">
+                        Booked On:
+                      </span>
+                    </span>
                     {new Date(booking.createdAt).toLocaleDateString()}
                   </p>
                 </div>
 
-                {/* Review Button */}
                 <div className="flex justify-center mt-8">
                   {hasReviewed ? (
                     <button
@@ -262,35 +298,30 @@ const axiosSecure = useAxios()
         </div>
       </div>
 
-      {/* Review Modal */}
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
-          onClick={closeModal} // Close modal when clicking outside
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="review-modal-title"
+          onClick={closeModal}
         >
           <div
             className="bg-zinc-900 rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-zinc-700 transform scale-95 animate-scale-in"
-            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={closeModal}
               className="absolute top-4 right-4 text-zinc-400 hover:text-[#faba22] text-4xl font-bold leading-none focus:outline-none transition-colors duration-200"
-              aria-label="Close review modal"
             >
               &times;
             </button>
 
-            <h2 id="review-modal-title" className="text-3xl font-bold mb-6 text-[#faba22] tracking-wide font-funnel text-center">
+            <h2 className="text-3xl font-bold mb-6 text-[#faba22] tracking-wide font-funnel text-center">
               Review Trainer
             </h2>
 
             <div className="space-y-5">
               <label className="block font-semibold text-zinc-300 text-lg">
                 Your Rating:
-                <div className="mt-3 flex justify-center"> {/* Centered stars */}
+                <div className="mt-3 flex justify-center">
                   <StarRatings
                     rating={ratingValue}
                     starRatedColor="#faba22"
@@ -298,8 +329,8 @@ const axiosSecure = useAxios()
                     changeRating={(newRating) => setRatingValue(newRating)}
                     numberOfStars={5}
                     name="trainer-rating"
-                    starDimension="35px" // Slightly larger stars
-                    starSpacing="7px" // More spacing between stars
+                    starDimension="35px"
+                    starSpacing="7px"
                   />
                 </div>
               </label>
@@ -315,21 +346,41 @@ const axiosSecure = useAxios()
                 />
               </label>
 
-              {submitError && <p className="text-red-500 text-center mt-3 text-sm">{submitError}</p>}
-              {submitSuccess && <p className="text-green-500 text-center mt-3 text-sm">{submitSuccess}</p>}
+              {submitError && (
+                <p className="text-red-500 text-center mt-3 text-sm">
+                  {submitError}
+                </p>
+              )}
+              {submitSuccess && (
+                <p className="text-green-500 text-center mt-3 text-sm">
+                  {submitSuccess}
+                </p>
+              )}
 
               <button
                 onClick={handleSubmitReview}
                 disabled={submitLoading}
-                className="w-full py-3 rounded-lg bg-[#faba22] text-black font-bold text-lg hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl
-                           transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed
-                           flex items-center justify-center gap-3"
+                className="w-full py-3 rounded-lg bg-[#faba22] text-black font-bold text-lg hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
                 {submitLoading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-black"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Submitting...
                   </>

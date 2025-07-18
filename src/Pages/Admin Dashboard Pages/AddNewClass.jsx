@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 import useAxios from "../../hooks/useAxios";
-import { FaPlusCircle, FaBook, FaClock, FaChartLine, FaEnvelope, FaImage, FaInfoCircle } from 'react-icons/fa'; 
+import { FaPlusCircle, FaBook, FaClock, FaChartLine, FaEnvelope, FaImage, FaInfoCircle } from 'react-icons/fa';
 
 const AddNewClass = () => {
   const axios = useAxios();
@@ -10,12 +10,13 @@ const AddNewClass = () => {
   const [details, setDetails] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [difficulty, setDifficulty] = useState("Beginner");
-  const [trainerEmails, setTrainerEmails] = useState(""); // This input is currently commented out in your JSX
+  const [trainerEmails, setTrainerEmails] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [imageSize, setImageSize] = useState(""); // New state for image size
+  const [imageSizeWarning, setImageSizeWarning] = useState(""); // New state for image size warning
   const [loading, setLoading] = useState(false);
 
-  // Convert file to base64 (without prefix)
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -24,13 +25,33 @@ const AddNewClass = () => {
       reader.onerror = (error) => reject(error);
     });
 
+  // Helper function to format file size
+  const formatBytes = (bytes, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     setImageFile(file);
     if (file) {
       setImagePreview(URL.createObjectURL(file));
+      setImageSize(formatBytes(file.size)); // Set the formatted size
+
+      // Check for image size limit (2MB)
+      if (file.size > 2 * 1024 * 1024) { // 2MB in bytes
+        setImageSizeWarning("Image size cannot be more than 2MB.");
+      } else {
+        setImageSizeWarning(""); // Clear warning if size is okay
+      }
     } else {
       setImagePreview("");
+      setImageSize(""); // Clear size if no file
+      setImageSizeWarning(""); // Clear warning if no file
     }
   };
 
@@ -52,7 +73,6 @@ const AddNewClass = () => {
     setLoading(true);
 
     try {
-      // 1. Upload image to /upload-image endpoint
       const base64Image = await toBase64(imageFile);
       const uploadRes = await axios.post("/upload-image", {
         imageBase64: base64Image,
@@ -62,14 +82,11 @@ const AddNewClass = () => {
         throw new Error("Image upload failed");
       }
 
-      // 2. Prepare trainerEmails array from comma separated input
-      // This part is kept for logic, even if the input is commented out in JSX
       const emailsArray = trainerEmails
         .split(",")
         .map((email) => email.trim())
         .filter((email) => email.length > 0);
 
-      // 3. POST class data to backend
       const classData = {
         name,
         image: uploadRes.data.url,
@@ -91,7 +108,6 @@ const AddNewClass = () => {
         confirmButtonColor: "#faba22",
       });
 
-      // Clear form
       setName("");
       setDetails("");
       setDurationMinutes("");
@@ -99,6 +115,8 @@ const AddNewClass = () => {
       setTrainerEmails("");
       setImageFile(null);
       setImagePreview("");
+      setImageSize(""); // Clear image size on successful submission
+      setImageSizeWarning(""); // Clear warning on successful submission
     } catch (error) {
       console.error("Add class error:", error);
       Swal.fire({
@@ -115,16 +133,16 @@ const AddNewClass = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16 flex items-center justify-center">
-      <div className="w-full max-w-2xl bg-zinc-900 p-8 rounded-2xl shadow-2xl border border-zinc-800">
-        <h2 className="text-4xl md:text-5xl font-bold font-funnel text-center mb-10 text-[#faba22] drop-shadow-lg">
+    <div className="min-h-screen bg-zinc-950 text-white font-inter flex items-center justify-center p-4 sm:p-8 lg:p-16">
+      <div className="w-full max-w-xs sm:max-w-lg md:max-w-xl lg:max-w-2xl bg-zinc-900 p-6 sm:p-8 md:p-10 rounded-2xl shadow-2xl border border-zinc-800">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-funnel text-center mb-8 sm:mb-10 text-[#faba22] drop-shadow-lg">
           Add New Class
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Class Name */}
           <div>
-            <label htmlFor="name" className="block text-lg font-medium mb-2 text-zinc-300">
+            <label htmlFor="name" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaBook className="inline-block mr-2 text-[#faba22]" /> Class Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -134,13 +152,13 @@ const AddNewClass = () => {
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Enter class name (e.g., Yoga Flow, HIIT Cardio)"
-              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+              className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg"
             />
           </div>
 
           {/* Details */}
           <div>
-            <label htmlFor="details" className="block text-lg font-medium mb-2 text-zinc-300">
+            <label htmlFor="details" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaInfoCircle className="inline-block mr-2 text-[#faba22]" /> Details <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -150,13 +168,13 @@ const AddNewClass = () => {
               required
               placeholder="Provide a detailed description of the class, its benefits, and what participants can expect."
               rows={5}
-              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
+              className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg resize-y"
             ></textarea>
           </div>
 
           {/* Duration */}
           <div>
-            <label htmlFor="durationMinutes" className="block text-lg font-medium mb-2 text-zinc-300">
+            <label htmlFor="durationMinutes" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaClock className="inline-block mr-2 text-[#faba22]" /> Duration (minutes) <span className="text-red-500">*</span>
             </label>
             <input
@@ -167,13 +185,13 @@ const AddNewClass = () => {
               min="1"
               required
               placeholder="e.g., 60 (for a 1-hour class)"
-              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+              className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg"
             />
           </div>
 
           {/* Difficulty */}
           <div>
-            <label htmlFor="difficulty" className="block text-lg font-medium mb-2 text-zinc-300">
+            <label htmlFor="difficulty" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaChartLine className="inline-block mr-2 text-[#faba22]" /> Difficulty <span className="text-red-500">*</span>
             </label>
             <select
@@ -181,7 +199,7 @@ const AddNewClass = () => {
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
               required
-              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg appearance-none cursor-pointer"
+              className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg appearance-none cursor-pointer"
             >
               <option value="Beginner">Beginner</option>
               <option value="Intermediate">Intermediate</option>
@@ -189,10 +207,9 @@ const AddNewClass = () => {
             </select>
           </div>
 
-          {/* Trainer Emails (commented out as per original code, but styled for consistency if uncommented) */}
-          {/*
-          <div>
-            <label htmlFor="trainerEmails" className="block text-lg font-medium mb-2 text-zinc-300">
+          {/* Trainer Emails (commented out) */}
+          {/* <div>
+            <label htmlFor="trainerEmails" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaEnvelope className="inline-block mr-2 text-[#faba22]" /> Trainer Emails (comma separated)
             </label>
             <input
@@ -201,22 +218,30 @@ const AddNewClass = () => {
               value={trainerEmails}
               onChange={(e) => setTrainerEmails(e.target.value)}
               placeholder="trainer1@example.com, trainer2@example.com"
-              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+              className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg"
             />
           </div>
           */}
 
           {/* Class Image */}
           <div>
-            <label htmlFor="imageFile" className="block text-lg font-medium mb-2 text-zinc-300">
+            <label htmlFor="imageFile" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">
               <FaImage className="inline-block mr-2 text-[#faba22]" /> Class Image <span className="text-red-500">*</span>
             </label>
             {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Class Image Preview"
-                className="w-full h-52 object-cover rounded-lg mb-4 border-2 border-zinc-700 shadow-md"
-              />
+              <div className="relative w-full max-h-52 mb-4">
+                <img
+                  src={imagePreview}
+                  alt="Class Image Preview"
+                  className="w-full max-h-52 object-cover rounded-lg border-2 border-zinc-700 shadow-md"
+                  style={{ maxHeight: '208px' }}
+                />
+                {imageSize && (
+                  <span className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-md">
+                    Size: {imageSize}
+                  </span>
+                )}
+              </div>
             ) : (
               <div className="w-full h-52 bg-zinc-800 flex flex-col items-center justify-center rounded-lg mb-4 text-zinc-400 border-2 border-zinc-700">
                 <FaImage className="text-5xl mb-3" />
@@ -231,19 +256,26 @@ const AddNewClass = () => {
               required={!imagePreview}
               className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
             />
+            {imageSizeWarning && (
+              <p className="text-red-500 text-sm mt-2 text-center">{imageSizeWarning}</p>
+            )}
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="w-full py-4 rounded-xl bg-[#faba22] text-black font-bold text-lg sm:text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {loading ? (
               <>
                 <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Adding...
               </>

@@ -48,7 +48,7 @@ const TeamSection = () => {
     }
 
     return (
-        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans overflow-hidden">
+        <section className="bg-zinc-950 pt-12 pb-36 px-4 sm:px-6 lg:px-8 font-sans overflow-hidden">
             <div className="max-w-7xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 font-funnel drop-shadow-lg">
                     Meet Our Expert Trainers

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react"; // Import useState
+
+
+import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../AuthProvider/useAuth";
@@ -6,10 +8,10 @@ import useAxios from "../../hooks/useAxios";
 
 const AddForumTrainer = () => {
     const { user: authUser } = useAuth();
-    const axiosSecure = useAxios()
+    const axiosSecure = useAxios();
     const navigate = useNavigate();
 
-    const [mongoUser, setMongoUser] = useState(null); // State to store MongoDB user data
+    const [mongoUser, setMongoUser] = useState(null);
     const [newForum, setNewForum] = useState({
         title: "",
         content: "",
@@ -18,10 +20,10 @@ const AddForumTrainer = () => {
 
     const [photoFile, setPhotoFile] = useState(null);
     const [previewURL, setPreviewURL] = useState("");
+    const [imageSize, setImageSize] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoadingUser, setIsLoadingUser] = useState(true); // New loading state for user data
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-    // Effect to fetch MongoDB user data
     useEffect(() => {
         const fetchMongoUser = async () => {
             if (!authUser?.email) {
@@ -47,7 +49,7 @@ const AddForumTrainer = () => {
         };
 
         fetchMongoUser();
-    }, [authUser]); // Depend on authUser to refetch if auth state changes
+    }, [authUser]);
 
     const handleInputChange = (e) => {
         setNewForum({ ...newForum, [e.target.name]: e.target.value });
@@ -55,8 +57,32 @@ const AddForumTrainer = () => {
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
-        setPhotoFile(file);
-        setPreviewURL(file ? URL.createObjectURL(file) : "");
+        const maxSize = 2 * 1024 * 1024;
+
+        if (file) {
+            if (file.size > maxSize) {
+                Swal.fire({
+                    title: "Image Too Large",
+                    text: "Image size cannot be more than 2MB. Please choose a smaller image.",
+                    icon: "error",
+                    background: "black",
+                    color: "#faba22",
+                    confirmButtonColor: "#faba22",
+                });
+                setPhotoFile(null);
+                setPreviewURL("");
+                setImageSize(null);
+                e.target.value = null;
+                return;
+            }
+            setPhotoFile(file);
+            setPreviewURL(URL.createObjectURL(file));
+            setImageSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+        } else {
+            setPhotoFile(null);
+            setPreviewURL("");
+            setImageSize(null);
+        }
     };
 
     const toBase64 = (file) =>
@@ -71,7 +97,6 @@ const AddForumTrainer = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Now check mongoUser for _id and email
         if (!mongoUser?._id || !mongoUser?.email) {
             Swal.fire({
                 title: "Error",
@@ -85,7 +110,6 @@ const AddForumTrainer = () => {
             return;
         }
 
-        // MODIFIED: Check if photoFile is present
         if (!photoFile) {
             Swal.fire({
                 title: "Image Required",
@@ -102,19 +126,16 @@ const AddForumTrainer = () => {
         try {
             let finalImageURL = newForum.image;
 
-            // photoFile is guaranteed to be present here due to the check above
             const base64Image = await toBase64(photoFile);
             const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
                 imageBase64: base64Image,
             });
             finalImageURL = uploadRes.data.url || finalImageURL;
 
-
-            // Use mongoUser._id and mongoUser.email for author details
             const authorId = mongoUser._id;
-            const authorName = authUser?.displayName || mongoUser.name || mongoUser.email; // Use authUser.displayName if available, then mongoUser.name
+            const authorName = authUser?.displayName || mongoUser.name || mongoUser.email;
             const authorRole = "Trainer";
-            const authorEmail = mongoUser.email
+            const authorEmail = mongoUser.email;
 
             await axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
                 ...newForum,
@@ -128,6 +149,7 @@ const AddForumTrainer = () => {
             setNewForum({ title: "", content: "", image: "" });
             setPhotoFile(null);
             setPreviewURL("");
+            setImageSize(null);
 
             Swal.fire({
                 title: "Forum Added!",
@@ -156,32 +178,31 @@ const AddForumTrainer = () => {
     if (isLoadingUser) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
-                <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
-                <p className="text-[#faba22] ml-4 text-xl font-inter">Loading user data...</p>
+                <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
+                <p className="text-[#faba22] ml-4 text-lg sm:text-xl font-inter">Loading user data...</p>
             </div>
         );
     }
 
-    // If user data failed to load or authUser is not available
     if (!mongoUser || !mongoUser._id) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
-                <p className="text-red-500 text-xl font-inter">User profile not found or loaded. Please ensure you are logged in correctly.</p>
+                <p className="text-red-500 text-lg sm:text-xl font-inter text-center mx-4">User profile not found or loaded. Please ensure you are logged in correctly.</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white font-inter p-8 sm:p-12 lg:p-16">
-            <h1 className="text-5xl md:text-6xl font-bold font-funnel text-center mb-12 text-[#faba22] drop-shadow-lg">
+        <div className="min-h-screen bg-zinc-950 text-white font-inter px-4 py-8 sm:px-6 lg:px-16">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-funnel text-center mb-8 sm:mb-12 text-[#faba22] drop-shadow-lg">
                 Create New Forum Post
             </h1>
 
-            <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl border border-zinc-800 w-full lg:w-3/4 xl:w-2/3 mx-auto">
-                <h2 className="text-3xl font-semibold mb-8 text-white">Your Forum Details</h2>
-                <form onSubmit={handleSubmit} className="space-y-8"> {/* Increased space-y */}
+            <div className="bg-zinc-900 p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-4xl mx-auto">
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-6 sm:mb-8 text-white">Your Forum Details</h2>
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                     <div>
-                        <label htmlFor="title" className="block text-lg font-medium mb-2 text-zinc-300">Forum Title</label>
+                        <label htmlFor="title" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Forum Title</label>
                         <input
                             type="text"
                             id="title"
@@ -190,12 +211,12 @@ const AddForumTrainer = () => {
                             onChange={handleInputChange}
                             placeholder="Enter a compelling title for your forum post"
                             required
-                            className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
+                            className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="content" className="block text-lg font-medium mb-2 text-zinc-300">Content</label>
+                        <label htmlFor="content" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Content</label>
                         <textarea
                             id="content"
                             name="content"
@@ -203,20 +224,23 @@ const AddForumTrainer = () => {
                             onChange={handleInputChange}
                             placeholder="Share your insights, questions, or discussions here..."
                             required
-                            rows={8} // Increased rows for more content visibility
-                            className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg resize-y"
+                            rows={6}
+                            className="w-full p-3 sm:p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-base sm:text-lg resize-y"
                         ></textarea>
                     </div>
 
                     <div>
-                        <label htmlFor="image" className="block text-lg font-medium mb-2 text-zinc-300">Upload Image (Required)</label> {/* Changed label */}
+                        <label htmlFor="image" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Upload Image (Required)</label>
                         {previewURL && (
-                            <div className="mb-6 flex justify-center"> {/* Increased mb */}
+                            <div className="mb-4 flex flex-col items-center">
                                 <img
                                     src={previewURL}
                                     alt="Image Preview"
-                                    className="w-64 h-40 object-cover rounded-xl border-4 border-zinc-700 shadow-md" // Larger preview, rounded corners, border, shadow
+                                    className="w-full max-w-xs sm:max-w-sm h-40 object-cover rounded-xl border-4 border-zinc-700 shadow-md"
                                 />
+                                {imageSize && (
+                                    <p className="mt-2 text-zinc-400 text-xs sm:text-sm">Size: {imageSize}</p>
+                                )}
                             </div>
                         )}
                         <input
@@ -224,22 +248,17 @@ const AddForumTrainer = () => {
                             id="image"
                             accept="image/*"
                             onChange={handlePhotoChange}
-                            required // MODIFIED: Added required attribute
-                            className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer" // Enhanced file input styling
+                            required
+                            className="w-full text-sm sm:text-base text-zinc-300 file:mr-3 file:py-2 sm:file:py-3 file:px-4 sm:file:px-6 file:rounded-full file:border-0 file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`w-full py-4 rounded-xl font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1
-                        ${
-                            isSubmitting
-                                ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                                : 'bg-[#faba22] hover:bg-yellow-500 text-black'
-                        }
-                        flex items-center justify-center gap-3
-                        `}
+                        className={`w-full py-3 sm:py-4 rounded-xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1
+                        ${isSubmitting ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-[#faba22] hover:bg-yellow-500 text-black'}
+                        flex items-center justify-center gap-2 sm:gap-3`}
                     >
                         {isSubmitting ? (
                             <>

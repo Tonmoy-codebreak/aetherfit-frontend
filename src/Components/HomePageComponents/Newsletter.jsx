@@ -38,7 +38,7 @@ const Newsletter = ({ user }) => {
   };
 
   return (
-    <section className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+    <section className="min-h-screen pb-20 bg-zinc-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
       <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden transform transition-all duration-300 hover:shadow-3xl">
 
         {/* Left Content - Enhanced Visuals */}

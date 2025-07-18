@@ -1,109 +1,97 @@
-import React, { useState } from "react"; // IMPORTED: useState
+import React, { useState } from "react";
 import { NavLink, Outlet } from "react-router"; 
-import { FaUser, FaClipboardList, FaUsers, FaHome, FaBars, FaTimes } from 'react-icons/fa'; // IMPORTED: FaBars and FaTimes icons
+
+import { FaUser, FaClipboardList, FaUsers, FaHome, FaBars, FaTimes } from 'react-icons/fa';
 
 const UserDashboard = () => {
-    // STATE: Manages the visibility of the sidebar for responsive behavior
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
     return (
-        <div className="flex min-h-screen bg-zinc-950 text-white font-inter w-full">
-            {/* Hamburger Button for screens smaller than lg */}
-            <div className="lg:hidden fixed top-4 left-4 z-[99] text-white"> {/* Higher z-index to ensure visibility */}
-                <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)} // TOGGLES sidebar state
-                    className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#faba22] bg-zinc-800"
-                >
-                    {/* Shows FaTimes (X) when open, FaBars (hamburger) when closed */}
-                    {isSidebarOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
-                </button>
-            </div>
+        <div className="flex min-h-screen bg-zinc-950 text-white w-full font-inter">
 
-            {/* Sidebar */}
-            <aside
-                className={`w-64 bg-zinc-900 shadow-xl border-r border-zinc-800 p-6 flex flex-col
-                           fixed inset-y-0 left-0 overflow-y-auto z-50 /* Fixed position and z-index for overlay */
-                           transform transition-transform duration-300 ease-in-out /* Smooth slide transition */
-                           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} /* Hides on mobile by default, slides in when open */
-                           lg:translate-x-0 lg:static lg:left-auto lg:w-64 /* On large screens, always visible and takes up space */
-                           `}
-            >
-                <h2 className="text-3xl font-bold text-[#faba22] mb-8 font-funnel drop-shadow-lg">
-                    Member Dashboard
-                </h2>
-                <nav className="flex flex-col gap-4">
-                    <NavLink
-                        to="/"
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium transition-all duration-200
-                                ${isActive
-                                    ? "bg-[#faba22] text-black shadow-md"
-                                    : "text-zinc-300 hover:bg-zinc-800 hover:text-[#faba22]"
-                                }`
-                        }
-                        onClick={() => setIsSidebarOpen(false)} // CLOSES sidebar when a link is clicked
-                    >
-                        <FaHome className="text-xl" />
-                        Go Home
-                    </NavLink>
-                    <NavLink
-                        to="profile"
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium transition-all duration-200
-                                ${isActive
-                                    ? "bg-[#faba22] text-black shadow-md"
-                                    : "text-zinc-300 hover:bg-zinc-800 hover:text-[#faba22]"
-                                }`
-                        }
-                        onClick={() => setIsSidebarOpen(false)} // CLOSES sidebar when a link is clicked
-                    >
-                        <FaUser className="text-xl" />
-                        Profile
-                    </NavLink>
-                    <NavLink
-                        to="activity-log"
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium transition-all duration-200
-                                ${isActive
-                                    ? "bg-[#faba22] text-black shadow-md"
-                                    : "text-zinc-300 hover:bg-zinc-800 hover:text-[#faba22]"
-                                }`
-                        }
-                        onClick={() => setIsSidebarOpen(false)} // CLOSES sidebar when a link is clicked
-                    >
-                        <FaClipboardList className="text-xl" />
-                        Activity Log
-                    </NavLink>
-                    <NavLink
-                        to="booked-trainer"
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium transition-all duration-200
-                                ${isActive
-                                    ? "bg-[#faba22] text-black shadow-md"
-                                    : "text-zinc-300 hover:bg-zinc-800 hover:text-[#faba22]"
-                                }`
-                        }
-                        onClick={() => setIsSidebarOpen(false)} // CLOSES sidebar when a link is clicked
-                    >
-                        <FaUsers className="text-xl" />
-                        Booked Trainer
-                    </NavLink>
-                </nav>
-            </aside>
-
-            {/* Optional Overlay when sidebar is open on smaller devices */}
+            {/* Overlay for mobile when sidebar is open */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" // Full screen overlay, hidden on lg and up
-                    onClick={() => setIsSidebarOpen(false)} // Closes sidebar when overlay is clicked
+                    className="fixed inset-0 bg-black bg-opacity-70 z-40 lg:hidden"
+                    onClick={toggleSidebar}
                 ></div>
             )}
 
-            {/* Main Content */}
-            <main className={`flex-1 p-8 bg-zinc-950 overflow-y-auto ${isSidebarOpen ? 'hidden lg:block' : 'block'} lg:ml-64`}>
-                 {/* Main content is hidden if sidebar is open on non-lg screens. Shifts on lg screens. */}
-                <Outlet />
-            </main>
+            {/* Sidebar */}
+            <aside
+                className={`
+                    fixed inset-y-0 left-0 w-64 bg-zinc-900 shadow-xl border-r border-zinc-800 p-6 flex flex-col
+                    transform transition-transform duration-300 ease-in-out z-50
+                    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                    lg:translate-x-0 lg:h-screen lg:overflow-y-auto
+                `}
+            >
+                <div className="p-4 text-center border-b border-zinc-700 mb-6 relative">
+                    <h2 className="text-3xl font-bold text-[#faba22] font-funnel drop-shadow-lg">
+                        Member Dashboard
+                    </h2>
+                    {/* Close button for mobile sidebar, only visible on small screens */}
+                    <button
+                        onClick={toggleSidebar}
+                        className="absolute top-4 right-4 text-zinc-400 hover:text-[#faba22] text-2xl lg:hidden"
+                        aria-label="Close sidebar"
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
+
+                <nav className="flex flex-col gap-4">
+                    {[
+                        { to: "/", label: "Go Home", icon: FaHome },
+                        { to: "profile", label: "Profile", icon: FaUser },
+                        { to: "activity-log", label: "Activity Log", icon: FaClipboardList },
+                        { to: "booked-trainer", label: "Booked Trainer", icon: FaUsers },
+                    ].map(({ to, label, icon: Icon }) => ( // Destructure icon as Icon for component usage
+                        <NavLink
+                            key={to}
+                            to={to}
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium transition-all duration-200
+                                ${isActive
+                                    ? "bg-[#faba22] text-black shadow-md"
+                                    : "text-zinc-300 hover:bg-zinc-800 hover:text-[#faba22]"}`
+                            }
+                            onClick={toggleSidebar} // Close sidebar on link click
+                        >
+                            <Icon className="text-xl" /> {/* Render Icon component */}
+                            {label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </aside>
+
+            {/* Main content area */}
+            <div className="flex-1 lg:ml-64 relative"> {/* Added relative to position hamburger button */}
+                {/* Hamburger button for mobile, only visible when sidebar is CLOSED */}
+                {!isSidebarOpen && (
+                    <button
+                        onClick={toggleSidebar}
+                        className="fixed top-4 left-4 z-30 p-3 bg-[#faba22] text-black rounded-full shadow-lg lg:hidden"
+                        aria-label="Open sidebar"
+                    >
+                        <FaBars size={20} />
+                    </button>
+                )}
+
+                <main className="p-4 sm:p-6 md:p-8 bg-zinc-950 overflow-y-auto min-h-screen">
+                    {/* Add padding-top to main content when sidebar is closed on small screens to prevent overlap with hamburger */}
+                    {!isSidebarOpen && (
+                        <div className="pt-16 lg:pt-0"> {/* Adjust top padding to clear the fixed hamburger button */}
+                            <Outlet />
+                        </div>
+                    )}
+                    {isSidebarOpen && (
+                        <Outlet />
+                    )}
+                </main>
+            </div>
         </div>
     );
 };

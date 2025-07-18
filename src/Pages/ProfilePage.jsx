@@ -124,7 +124,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white font-inter p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white font-inter pt-24 p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-6xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-8 md:p-10 lg:grid lg:grid-cols-2 lg:gap-12">
         {/* Left Column: Profile Overview */}
         <div className="lg:border-r lg:border-zinc-700 lg:pr-8 flex flex-col items-center text-center lg:items-start lg:text-left mb-8 lg:mb-0">

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Swal from 'sweetalert2';
 import { BiUpvote, BiDownvote } from 'react-icons/bi'; // Icons for voting
 import { FaUserShield, FaUserTie } from 'react-icons/fa'; // Icons for Admin/Trainer badges
 import { useAuth } from '../AuthProvider/useAuth';
+import useAxios from '../hooks/useAxios';
 
 const ForumPage = () => {
   const { user } = useAuth()
+  const axiosSecure = useAxios()
   const [forums, setForums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,13 +16,13 @@ const ForumPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const postsPerPage = 6; // As per requirement
 
-  const fetchForums = async (page) => {
+  const fetchForums = async (page , axiosSecure) => {
     setLoading(true);
     setError(null);
     try {
       // Pass user email to backend to get their vote status for each forum
       const userEmailQuery = user?.email ? `&userEmail=${user.email}` : '';
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/forums?page=${page}&limit=${postsPerPage}${userEmailQuery}`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums?page=${page}&limit=${postsPerPage}${userEmailQuery}`);
       setForums(res.data.forums);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.page);
@@ -34,12 +36,12 @@ const ForumPage = () => {
   };
 
   useEffect(() => {
-    fetchForums(1); // Fetch first page on component mount
-  }, [user]); // Re-fetch if user changes (e.g., logs in/out)
+    fetchForums(1 , axiosSecure); // Fetch first page on component mount
+  }, [user , axiosSecure]); // Re-fetch if user changes (e.g., logs in/out)
 
   const handlePageChange = (page) => {
     if (page > 0 && page <= totalPages) {
-      fetchForums(page);
+      fetchForums(page, axiosSecure);
     }
   };
 
@@ -88,13 +90,13 @@ const ForumPage = () => {
         return forum;
       }));
 
-      await axios.patch(`${import.meta.env.VITE_API_URL}/forums/${forumId}/vote`, {
+      await axiosSecure.patch(`${import.meta.env.VITE_API_URL}/forums/${forumId}/vote`, {
         userEmail: user.email,
         voteType: voteType,
       });
 
       // Re-fetch to ensure data consistency after optimistic update
-      fetchForums(currentPage);
+      fetchForums(currentPage,axiosSecure);
 
     } catch (err) {
       console.error('Error voting:', err);

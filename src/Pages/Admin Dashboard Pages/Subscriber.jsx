@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+
 import { MdVerified } from "react-icons/md";
+import useAxios from "../../hooks/useAxios";
 
 const Subscriber = () => {
+  const axiosSecure = useAxios()
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
+    axiosSecure
       .get(`${import.meta.env.VITE_API_URL}/admin/newsletter-subscribers`)
       .then((res) => {
         setSubscribers(res.data);

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import axios from "axios";
+
 import { useAuth } from "../AuthProvider/useAuth";
 import Select from "react-select";
 import Swal from "sweetalert2";
-
+import useAxios from "../hooks/useAxios"
 const skillsList = [
   "Strength Training",
   "HIIT",
@@ -48,6 +48,7 @@ const experienceOptions = Array.from({ length: 30 }, (_, i) => ({
 const BeTrainerPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const axiosSecure = useAxios()
 
   const [mongoUser, setMongoUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -71,7 +72,7 @@ const BeTrainerPage = () => {
   useEffect(() => {
     if (!user?.email) return;
 
-    axios
+    axiosSecure
       .get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`)
       .then(({ data }) => {
         setMongoUser(data);
@@ -85,7 +86,7 @@ const BeTrainerPage = () => {
       .catch((err) => {
         console.error("Error fetching user data:", err);
       });
-  }, [user]);
+  }, [user,axiosSecure]);
 
   const handleCheckboxChange = (key, value) => {
     setFormData((prev) => {
@@ -169,13 +170,13 @@ const BeTrainerPage = () => {
     };
 
     try {
-      const { data } = await axios.post(
+      const { data } = await axiosSecure.post(
         `${import.meta.env.VITE_API_URL}/trainer-application`,
         payload
       );
 
       if (data?.insertedId) {
-        await axios.patch(`${import.meta.env.VITE_API_URL}/users/${mongoUser._id}`, {
+        await axiosSecure.patch(`${import.meta.env.VITE_API_URL}/users/${mongoUser._id}`, {
           trainerApplicationStatus: "pending",
         });
 

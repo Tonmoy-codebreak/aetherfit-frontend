@@ -1,11 +1,11 @@
 import React, { useState, useContext } from "react";
-import axios from "axios";
+import useAxios from "../../hooks/useAxios";
 
 const Newsletter = ({ user }) => {
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
+  const axiosSecure = useAxios()
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,7 +17,7 @@ const Newsletter = ({ user }) => {
     setMessage("");
 
     try {
-      const res = await axios.post(
+      const res = await axiosSecure.post(
         `${import.meta.env.VITE_API_URL}/newsletter-subscribe`,
         {
           name: formData.name,

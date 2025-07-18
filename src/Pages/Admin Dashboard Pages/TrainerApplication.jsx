@@ -1,13 +1,15 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+
 import { NavLink } from "react-router"; 
 import { FaInfoCircle } from 'react-icons/fa';
+import useAxios from "../../hooks/useAxios";
 const TrainerApplication = () => {
+  const axiosSecure = useAxios()
   const { data: applications = [], isLoading, error: fetchError } = useQuery({
     queryKey: ["pendingApplications"],
     queryFn: async () => {
-      const res = await axios.get(
+      const res = await axiosSecure.get(
         `${import.meta.env.VITE_API_URL}/trainer-applications/admin`
       );
       return res.data;

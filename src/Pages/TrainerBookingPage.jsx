@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router"; 
-import axios from "axios";
+
 import Swal from "sweetalert2"; // Import SweetAlert2
 import { useAuth } from "../AuthProvider/useAuth";
+import useAxios from "../hooks/useAxios";
 
 
 // NOTE: Added more benefits to make the cards look more substantial for UI purposes.
@@ -49,7 +50,7 @@ const TrainerBookingPage = () => {
     const { trainerId, day, time } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth()
-
+    const axiosSecure = useAxios()
     const [trainer, setTrainer] = useState(null);
     const [classInfo, setClassInfo] = useState(null);
     const [selectedPackage, setSelectedPackage] = useState(null);
@@ -61,7 +62,7 @@ const TrainerBookingPage = () => {
         const fetchTrainerAndClass = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers/${trainerId}`);
+                const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers/${trainerId}`);
                 const trainerData = res.data;
                 setTrainer(trainerData);
 
@@ -89,7 +90,7 @@ const TrainerBookingPage = () => {
                 return;
             }
             try {
-                const userRes = await axios.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
+                const userRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
                 setCurrentUserRole(userRes.data.role);
             } catch (err) {
                 console.error("Error fetching user role:", err);

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import useAxios from '../../hooks/useAxios';
 
 const LatestPost = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const axiosSecure = useAxios()
 
     useEffect(() => {
         const fetchLatestPosts = async () => {
             try {
                 setLoading(true);
                 // Fetch the latest 6 posts (default limit in backend route)
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/forums`);
+                const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums`);
                 setPosts(response.data.forums); // Access the 'forums' array from the response
             } catch (err) {
                 console.error("Error fetching latest forum posts:", err);

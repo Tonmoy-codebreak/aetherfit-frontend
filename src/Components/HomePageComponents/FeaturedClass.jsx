@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import useAxios from '../../hooks/useAxios';
 
 // Modal Component
 const ClassDetailsModal = ({ classItem, onClose }) => {
@@ -7,7 +7,7 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 font-sans">
-            <div className="bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            <div className="bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 p-8  max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
                 {/* Close Button */}
                 <button
                     onClick={onClose}
@@ -34,7 +34,6 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
                         <span className="font-semibold text-[#faba22]">Bookings:</span>{' '}
                         <span className="text-white">{classItem.totalBookings}</span>
                     </p>
-                    {/* Add other class info if available in classItem from your backend */}
                     {classItem.durationMinutes && (
                         <p className="text-zinc-400">
                             <span className="font-semibold text-[#faba22]">Duration:</span>{' '}
@@ -47,7 +46,6 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
                             <span className="text-white">{classItem.difficulty}</span>
                         </p>
                     )}
-                    {/* Example for trainers, assuming classItem.trainers is an array of trainer objects */}
                     {classItem.trainers && classItem.trainers.length > 0 && (
                         <p className="text-zinc-400 col-span-full">
                             <span className="font-semibold text-[#faba22]">Trainers:</span>{' '}
@@ -57,8 +55,6 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
                         </p>
                     )}
                 </div>
-
-                {/* You can add more details or actions here */}
             </div>
         </div>
     );
@@ -69,13 +65,14 @@ const FeaturedClass = () => {
     const [featuredClasses, setFeaturedClasses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedClass, setSelectedClass] = useState(null); // State to hold the class for the modal
+    const [selectedClass, setSelectedClass] = useState(null);
+    const axiosSecure = useAxios();
 
     useEffect(() => {
         const fetchFeaturedClasses = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/featured-classes`);
+                const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/featured-classes`);
                 setFeaturedClasses(response.data);
             } catch (err) {
                 console.error("Error fetching featured classes:", err);
@@ -86,7 +83,7 @@ const FeaturedClass = () => {
         };
 
         fetchFeaturedClasses();
-    }, []); // Empty dependency array means this runs once on component mount
+    }, []);
 
     const openModal = (classItem) => {
         setSelectedClass(classItem);
@@ -121,7 +118,7 @@ const FeaturedClass = () => {
     }
 
     return (
-        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+        <section className="bg-zinc-950 py-32 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 font-funnel drop-shadow-lg">
                     Featured Classes
@@ -131,25 +128,40 @@ const FeaturedClass = () => {
                     {featuredClasses.map((classItem) => (
                         <div
                             key={classItem._id}
-                            className="bg-zinc-900 rounded-xl shadow-xl border border-zinc-800 overflow-hidden
-                                       transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                            className="group bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-zinc-700 transition-transform duration-300 hover:scale-[1.03] hover:shadow-yellow-500/20 relative"
                         >
-                            <img
-                                src={classItem.image}
-                                alt={classItem.name}
-                                className="w-full h-48 object-cover object-center rounded-t-xl"
-                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x200/3f3f46/fafa00?text=No+Image"; }}
-                            />
-                            <div className="p-6">
-                                <h3 className="text-2xl font-semibold text-white mb-2">{classItem.name}</h3>
-                                <p className="text-zinc-400 text-base mb-4 line-clamp-3">{classItem.details}</p>
-                                <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
-                                    <p className="text-[#faba22] font-bold text-lg">
+                            <div className="relative">
+                                <img
+                                    src={classItem.image}
+                                    alt={classItem.name}
+                                    className="w-full h-56 object-cover object-center rounded-t-3xl group-hover:brightness-110 transition duration-300"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://placehold.co/400x200/3f3f46/fafa00?text=No+Image";
+                                    }}
+                                />
+
+                                {/* Floating Badge / Class Title */}
+                                <div className="absolute -bottom-6 left-4 bg-[#faba22] text-black px-5 py-2 rounded-full shadow-lg font-funnel text-lg font-semibold z-10">
+                                    {classItem.name}
+                                </div>
+                            </div>
+
+                            <div className="pt-10 pb-6 px-6">
+                                {/* Class Description */}
+                                <p className="text-zinc-400 text-sm mb-5 line-clamp-3 min-h-[72px]">
+                                    {classItem.details}
+                                </p>
+
+                                {/* Booking + Button */}
+                                <div className="flex items-center justify-between mt-auto pt-5 border-t border-zinc-700">
+                                    <p className="text-[#faba22] font-bold text-base">
                                         Bookings: <span className="text-white">{classItem.totalBookings}</span>
                                     </p>
+
                                     <button
                                         onClick={() => openModal(classItem)}
-                                        className="bg-[#faba22] text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+                                        className="px-4 py-2 rounded-full bg-[#faba22] text-black font-semibold text-sm hover:bg-yellow-400 transition-colors"
                                     >
                                         View Details
                                     </button>

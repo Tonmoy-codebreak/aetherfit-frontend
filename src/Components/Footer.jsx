@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaFacebookF, FaInstagram, FaTwitter, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { Link } from 'react-router';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -21,23 +22,26 @@ const Footer = () => {
                     <p className="text-zinc-400 text-sm max-w-xs leading-relaxed">
                         Your journey to a healthier, stronger you starts here. Empowering fitness, one step at a time.
                     </p>
-                    <p className="text-zinc-400 text-xs">
-                        &copy; {currentYear} AetherFit. All rights reserved.
-                    </p>
                 </div>
 
                 {/* Quick Links */}
                 <div className="flex flex-col gap-4">
                     <h3 className="text-xl font-semibold text-white font-funnel">Quick Links</h3>
                     <ul className="space-y-2">
-                        {['Home', 'Classes', 'Trainers', 'Community Forum'].map(link => (
-                            <li key={link}>
-                                <a
-                                    href="#"
+                        {[
+                            { name: "Home", path: "/" },
+                            { name: "Classes", path: "/classes" },
+                            { name: "Trainers", path: "/trainers" },
+                            { name: "Community Forum", path: "/forum" }
+                        ].map(({ name, path }) => (
+                            <li key={name}>
+                                <Link
+                                    to={path}
                                     className="hover:text-[#faba22] transition-colors text-base"
+                                    onClick={() => window.scrollTo(0, 0)}
                                 >
-                                    {link}
-                                </a>
+                                    {name}
+                                </Link>
                             </li>
                         ))}
                     </ul>
@@ -96,7 +100,11 @@ const Footer = () => {
                         </a>
                     </div>
                 </div>
+            </div>
 
+            {/* Global Copyright */}
+            <div className="text-center mt-8 text-zinc-400 text-xs">
+                &copy; {currentYear} AetherFit. All rights reserved.
             </div>
         </footer>
     );

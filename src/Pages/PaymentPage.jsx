@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import axios from "axios";
+
 import Swal from "sweetalert2"; // Import SweetAlert2
 import { useAuth } from "../AuthProvider/useAuth";
+import useAxios from "../hooks/useAxios";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -12,6 +13,7 @@ const CheckoutForm = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const axiosSecure = useAxios()
 
     const stripe = useStripe();
     const elements = useElements();
@@ -23,7 +25,7 @@ const CheckoutForm = () => {
 
     useEffect(() => {
         if (paymentInfo?.packagePrice) {
-            axios
+            axiosSecure
                 .post(`${import.meta.env.VITE_API_URL}/create-payment-intent`, {
                     amount: paymentInfo.packagePrice * 100,
                 })
@@ -69,7 +71,7 @@ const CheckoutForm = () => {
             });
 
             try {
-                await axios.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
+                await axiosSecure.post(`${import.meta.env.VITE_API_URL}/save-payment`, {
                     trainerId: paymentInfo.trainerId,
                     trainerName: paymentInfo.trainerName,
                     trainerEmail: paymentInfo.trainerEmail,

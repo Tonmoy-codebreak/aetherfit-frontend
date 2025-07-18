@@ -1,14 +1,16 @@
 import React from "react";
-import axios from "axios";
+
 import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'; // Import Recharts components
 import { FaDollarSign, FaUsers, FaChartPie, FaChartBar } from 'react-icons/fa'; // Icons for better UI
+import useAxios from "../../hooks/useAxios";
 
 const BalanceAdmin = () => {
+  const axiosSecure = useAxios()
   const { data, isLoading, isError } = useQuery({
     queryKey: ["balance-summary"],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/balance-summary`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/admin/balance-summary`);
       return res.data;
     },
   });
@@ -17,7 +19,7 @@ const BalanceAdmin = () => {
   const { data: userStats, isLoading: isUserStatsLoading, isError: isUserStatsError } = useQuery({
     queryKey: ["user-stats"],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/user-stats`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/admin/user-stats`);
       return res.data;
     },
   });

@@ -1,25 +1,27 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+
 import Swal from "sweetalert2";
 import { MdDeleteForever } from 'react-icons/md'; 
 import { FaTimes } from 'react-icons/fa';
+import useAxios from "../../hooks/useAxios";
 
 const AllTrainers = () => {
+  const axiosSecure = useAxios()
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: trainers = [], isLoading, error } = useQuery({
     queryKey: ["allTrainers"],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers`);
       return res.data;
     },
   });
 
   const { mutate: removeTrainer, isLoading: isRemoving } = useMutation({
     mutationFn: async (trainerId) => {
-      await axios.delete(
+      await axiosSecure.delete(
         `${import.meta.env.VITE_API_URL}/trainers/${trainerId}/remove-role`
       );
     },

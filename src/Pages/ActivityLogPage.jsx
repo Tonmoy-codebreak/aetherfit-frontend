@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
-import axios from "axios";
 import { FaEye } from "react-icons/fa"; 
+import useAxios from "../hooks/useAxios.js";
 
 const ActivityLogPage = () => {
   const auth = getAuth();
@@ -10,6 +10,7 @@ const ActivityLogPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [loadingApplications, setLoadingApplications] = useState(true); // New loading state for applications
+  const axiosSecure = useAxios()
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -18,7 +19,7 @@ const ActivityLogPage = () => {
       setLoadingApplications(true); // Set loading true before fetching
       const url = `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`;
 
-      axios
+      axiosSecure
         .get(url)
         .then((res) => {
           setApplications(res.data);
@@ -31,7 +32,7 @@ const ActivityLogPage = () => {
     } else {
       setLoadingApplications(false); // If no user email, stop loading
     }
-  }, []);
+  }, [auth,axiosSecure]);
 
   const openFeedbackModal = (feedback) => {
     setSelectedFeedback(feedback || "No feedback provided.");

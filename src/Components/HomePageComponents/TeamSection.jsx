@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+
+import useAxios from '../../hooks/useAxios';
 
 const TeamSection = () => {
     const [trainers, setTrainers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const axiosSecure = useAxios()
     useEffect(() => {
         const fetchTeamTrainers = async () => {
             try {
                 setLoading(true);
                 // Fetch data from the backend route that provides trainer profiles
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/team-trainers`);
+                const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/team-trainers`);
                 setTrainers(response.data);
             } catch (err) {
                 console.error("Error fetching team trainers:", err);

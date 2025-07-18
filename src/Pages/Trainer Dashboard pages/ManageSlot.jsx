@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Swal from 'sweetalert2';
 import { useAuth } from '../../AuthProvider/useAuth';
 import { MdDeleteForever } from 'react-icons/md';
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
+import useAxios from '../../hooks/useAxios';
 
 const ManageSlot = () => {
   const { user } = useAuth();
+  const axiosSecure = useAxios()
   const [trainerSlots, setTrainerSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,7 +22,7 @@ const ManageSlot = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/slots-by-email/${user.email}`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/slots-by-email/${user.email}`);
       setTrainerSlots(res.data.slotsWithBooking);
       setTrainerProfileId(res.data.trainerProfileId);
     } catch (err) {
@@ -34,7 +36,7 @@ const ManageSlot = () => {
 
   useEffect(() => {
     fetchTrainerSlots();
-  }, [user]);
+  }, [user , axiosSecure]);
 
   const handleDeleteSlot = async (slotDay, slotTimeRange) => {
     if (!trainerProfileId) {
@@ -53,7 +55,7 @@ const ManageSlot = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await axios.patch(
+          const response = await axiosSecure.patch(
             `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerProfileId}/slots/${encodeURIComponent(slotTimeRange)}/delete`,
             { day: slotDay }
           );

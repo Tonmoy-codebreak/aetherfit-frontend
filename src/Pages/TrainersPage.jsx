@@ -1,14 +1,9 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import useAxios from "../hooks/useAxios";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { Link } from "react-router";
 
-const fetchTrainers = async () => {
-  const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers`);
-  if (!Array.isArray(res.data)) throw new Error("Invalid data format received");
-  return res.data;
-};
 
 const getSocialIcon = (url) => {
   if (!url || typeof url !== "string") return null;
@@ -21,6 +16,14 @@ const getSocialIcon = (url) => {
 };
 
 const AllTrainersPage = () => {
+  const axiosSecure = useAxios();
+
+  const fetchTrainers = async () => {
+  const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers`);
+  if (!Array.isArray(res.data)) throw new Error("Invalid data format received");
+  return res.data;
+};
+
   const { data: trainers = [], isLoading, error } = useQuery({
     queryKey: ["trainers"],
     queryFn: fetchTrainers,

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 import Swal from "sweetalert2";
 import { IoEye } from "react-icons/io5";
 import { useNavigate } from "react-router"; 
 import { FaPlus, FaTrashAlt, FaTimes, FaRegThumbsUp } from 'react-icons/fa'; 
+import useAxios from "../../hooks/useAxios";
 
 const AddForumAdmin = () => {
+  const axiosSecure = useAxios()
   const [forums, setForums] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newForum, setNewForum] = useState({
@@ -25,7 +27,7 @@ const AddForumAdmin = () => {
 
   const fetchForums = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/forums`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/admin/forums`);
       setForums(res.data);
     } catch (err) {
       console.error("Error fetching forums:", err);
@@ -68,7 +70,7 @@ const AddForumAdmin = () => {
 
       if (photoFile) {
         const base64Image = await toBase64(photoFile);
-        const uploadRes = await axios.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
+        const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
           imageBase64: base64Image,
         });
         finalImageURL = uploadRes.data.url || finalImageURL;
@@ -78,7 +80,7 @@ const AddForumAdmin = () => {
       const authorName = "Admin User"; // This is hardcoded as per original logic
       const authorRole = "Admin"; // This is hardcoded as per original logic
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
+      await axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
         ...newForum,
         image: finalImageURL,
         authorId,
@@ -130,7 +132,7 @@ const AddForumAdmin = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
+        await axiosSecure.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
         Swal.fire({
           title: '<span style="color:#faba22">Deleted!</span>',
           text: "Forum has been deleted.",

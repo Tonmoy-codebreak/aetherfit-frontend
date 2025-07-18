@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
 import { useParams, Link } from "react-router";
-import axios from "axios";
+
 import {
   BiUpvote,
   BiSolidUpvote,
@@ -8,10 +8,12 @@ import {
   BiSolidDownvote,
 } from "react-icons/bi";
 import { AuthContext } from "../AuthProvider/Authcontext";
+import useAxios from "../hooks/useAxios";
 
 const ForumPostDetails = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
+  const axiosSecure = useAxios()
 
   const [forum, setForum] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +24,7 @@ const ForumPostDetails = () => {
 
     try {
       setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/forums/${id}`, {
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums/${id}`, {
         params: { userEmail: user.email },
       });
 
@@ -33,7 +35,7 @@ const ForumPostDetails = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, user?.email]);
+  }, [id, user?.email , axiosSecure]);
 
   useEffect(() => {
     fetchForum();
@@ -45,7 +47,7 @@ const ForumPostDetails = () => {
     const hasVoted = userVote === type;
 
     try {
-      const res = await axios.patch(
+      const res = await axiosSecure.patch(
         `${import.meta.env.VITE_API_URL}/forums/${id}/vote`,
         {
           userEmail: user.email,

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react"; // Import useState
-import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../AuthProvider/useAuth";
+import useAxios from "../../hooks/useAxios";
 
 const AddForumTrainer = () => {
     const { user: authUser } = useAuth();
+    const axiosSecure = useAxios
     const navigate = useNavigate();
 
     const [mongoUser, setMongoUser] = useState(null); // State to store MongoDB user data
@@ -28,7 +29,7 @@ const AddForumTrainer = () => {
                 return;
             }
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/users?email=${authUser.email}`);
+                const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${authUser.email}`);
                 setMongoUser(res.data);
             } catch (err) {
                 console.error("Error fetching MongoDB user data:", err);
@@ -103,7 +104,7 @@ const AddForumTrainer = () => {
 
             // photoFile is guaranteed to be present here due to the check above
             const base64Image = await toBase64(photoFile);
-            const uploadRes = await axios.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
+            const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
                 imageBase64: base64Image,
             });
             finalImageURL = uploadRes.data.url || finalImageURL;
@@ -115,7 +116,7 @@ const AddForumTrainer = () => {
             const authorRole = "Trainer";
             const authorEmail = mongoUser.email
 
-            await axios.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
+            await axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
                 ...newForum,
                 image: finalImageURL,
                 authorId,

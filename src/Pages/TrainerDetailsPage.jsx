@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router"; 
-import axios from "axios";
+
 import { IoMdDoneAll } from "react-icons/io";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { useAuth } from "../AuthProvider/useAuth";
+import useAxios from "../hooks/useAxios";
 
 const getSocialIcon = (url) => {
     if (!url || typeof url !== 'string') return null;
@@ -29,6 +30,7 @@ const TrainerDetailsPage = () => {
     const navigate = useNavigate();
 
     const { user } = useAuth();
+    const axiosSecure = useAxios()
     const [trainer, setTrainer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -43,7 +45,7 @@ const TrainerDetailsPage = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainers/${id}`);
+                const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers/${id}`);
                 if (!res.data || !res.data._id) {
                     throw new Error("Trainer data not found");
                 }
@@ -62,7 +64,7 @@ const TrainerDetailsPage = () => {
                     setBookedSlots([]); // Clear if no user
                     return;
                 }
-                const res = await axios.get(
+                const res = await axiosSecure.get(
                     `${import.meta.env.VITE_API_URL}/booking-logs`,
                     { params: { userEmail: user.email } }
                 );
@@ -86,12 +88,12 @@ const TrainerDetailsPage = () => {
                 }
 
                 // Fetch current user's role from your backend
-                const userRes = await axios.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
+                const userRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
                 const userDbData = userRes.data;
                 setCurrentUserRole(userDbData.role); // Set the user's role
 
                 // Check for pending applications
-                const applicationsRes = await axios.get(
+                const applicationsRes = await axiosSecure.get(
                     `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`
                 );
                 const hasPendingApplication = applicationsRes.data.some((app) => app.email === user.email && app.status === "pending");
@@ -109,7 +111,7 @@ const TrainerDetailsPage = () => {
         fetchTrainer();
         fetchBookedSlots();
         checkUserStatus(); // Call the new combined check
-    }, [id, user?.email]); // Re-run if trainer ID or user email changes
+    }, [id, user?.email , axiosSecure]); // Re-run if trainer ID or user email changes
 
     const isSlotBooked = (day, timeRange) => {
         return bookedSlots.some(

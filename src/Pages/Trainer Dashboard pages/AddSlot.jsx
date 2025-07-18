@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+
 import Select from 'react-select';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../AuthProvider/useAuth';
+import useAxios from '../../hooks/useAxios';
 
 // Options for dropdowns (unchanged logic)
 const hourOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: i + 1 }));
@@ -30,6 +31,7 @@ const socialPlatforms = [
 ];
 
 const AddSlot = () => {
+    const axiosSecure = useAxios()
     const { user } = useAuth();
     const [trainerData, setTrainerData] = useState(null);
     const [classes, setClasses] = useState([]);
@@ -91,11 +93,11 @@ const AddSlot = () => {
             if (!user?.email) return;
 
             try {
-                const trainerRes = await axios.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
+                const trainerRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
                 setTrainerData(trainerRes.data);
 
                 // MODIFIED: Use the new /classes/all route to get all classes
-                const classesRes = await axios.get(`${import.meta.env.VITE_API_URL}/classes/all`);
+                const classesRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/classes/all`);
                 setClasses(classesRes.data); // The new route directly returns an array of classes
 
             } catch (err) {
@@ -105,7 +107,7 @@ const AddSlot = () => {
         };
 
         fetchTrainerDataAndClasses();
-    }, [user]);
+    }, [user,axiosSecure]);
 
     // Input change handlers (unchanged)
     const handleInputChange = (e) => {
@@ -147,7 +149,7 @@ const AddSlot = () => {
         };
 
         try {
-            const response = await axios.patch(
+            const response = await axiosSecure.patch(
                 `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerData._id}/add-slot`,
                 newSlot
             );
@@ -163,7 +165,7 @@ const AddSlot = () => {
                     selectedClass: null,
                 });
                 // Refetch trainerData to update the UI with the new slot
-                const trainerRes = await axios.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
+                const trainerRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
                 setTrainerData(trainerRes.data);
             }
         } catch (err) {

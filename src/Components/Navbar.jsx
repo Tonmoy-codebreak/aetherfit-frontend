@@ -7,7 +7,6 @@ import Swal from "sweetalert2";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const { user, logoutUser } = useAuth();
 
   const handleLogout = async () => {
@@ -44,11 +43,6 @@ const Navbar = () => {
       </li>
       {user && (
         <>
-          {/* <li>
-            <NavLink to="/dashboard" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
-              Dashboard
-            </NavLink>
-          </li> */}
           <li>
             <NavLink to="/profile" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
               Profile
@@ -63,7 +57,6 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-black shadow-md font-funnel">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center space-x-3">
             <img
               src="https://i.ibb.co/QFNxgTVF/aetherfit-logo.png"
@@ -74,13 +67,11 @@ const Navbar = () => {
             <span className="text-2xl font-bold text-white">AetherFit</span>
           </div>
 
-          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center space-x-5">
             <ul className="flex items-center space-x-5">{navOption}</ul>
 
             {user ? (
               <div className="flex items-center space-x-4">
-                {/* Dashboard Icon */}
                 <Link
                   to="/dashboard"
                   className="w-10 h-10 flex items-center justify-center rounded-full text-[#faba22]"
@@ -89,7 +80,6 @@ const Navbar = () => {
                   <RxDashboard className="text-2xl" />
                 </Link>
 
-                {/* Profile Picture */}
                 <img
                   src={user.photoURL || "https://placehold.co/40x40/666666/FFFFFF?text=U"}
                   alt={user.displayName || "User"}
@@ -97,13 +87,11 @@ const Navbar = () => {
                   className="w-10 h-10 rounded-full border-2 border-[#faba22] object-cover"
                 />
 
-                {/* Logout Button */}
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition duration-300"
                 >
                   <FiLogOut className="text-xm" />
-                  
                 </button>
               </div>
             ) : (
@@ -117,7 +105,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="lg:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -135,10 +122,10 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden mt-2 bg-black px-4 pt-4 pb-6 rounded-b-lg shadow-md text-white">
             <ul className="space-y-2">{navOption}</ul>
+
             {user ? (
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <div className="flex items-center space-x-3 mb-4">
@@ -152,6 +139,15 @@ const Navbar = () => {
                     <div className="text-gray-400 text-sm">{user.email}</div>
                   </div>
                 </div>
+
+                <Link
+                  to="/dashboard"
+                  className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white mb-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+
                 <Link
                   to="/dashboard/profile"
                   className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white mb-2"
@@ -159,6 +155,7 @@ const Navbar = () => {
                 >
                   Profile
                 </Link>
+
                 <button
                   onClick={() => {
                     handleLogout();

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+
 import Swal from "sweetalert2"; // Import Swal for beautiful alerts
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram, FaCalendarAlt, FaClock, FaAward, FaInfoCircle, FaTimes, FaCheckCircle, FaBan } from "react-icons/fa"; // Importing icons
+import useAxios from "../../hooks/useAxios";
 
 // Helper function to get social media icon (unchanged logic)
 const getSocialIcon = (url) => {
@@ -26,6 +27,7 @@ const getSocialIcon = (url) => {
 };
 
 const TrainerApplicationDetails = () => {
+  const axiosSecure = useAxios()
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -37,7 +39,7 @@ const TrainerApplicationDetails = () => {
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ["trainer-application-details", id],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/trainer-application/${id}`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-application/${id}`);
       return res.data;
     },
   });
@@ -77,7 +79,7 @@ const TrainerApplicationDetails = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/trainer-application/${id}/approve`);
+      await axiosSecure.post(`${import.meta.env.VITE_API_URL}/trainer-application/${id}/approve`);
       Swal.fire({
         icon: "success",
         title: '<span style="color:#faba22">Trainer Approved!</span>',
@@ -126,7 +128,7 @@ const TrainerApplicationDetails = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/trainer-application/${id}/reject`, { reason: rejectFeedback });
+      await axiosSecure.post(`${import.meta.env.VITE_API_URL}/trainer-application/${id}/reject`, { reason: rejectFeedback });
       Swal.fire({
         icon: "success",
         title: '<span style="color:#faba22">Trainer Rejected!</span>',

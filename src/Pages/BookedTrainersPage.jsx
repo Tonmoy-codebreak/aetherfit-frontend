@@ -1,35 +1,36 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 import { useAuth } from "../AuthProvider/useAuth";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import StarRatings from "react-star-ratings"; // Ensure this library is installed
 import { FaCalendarAlt, FaDumbbell, FaDollarSign, FaUserCircle, FaEnvelope, FaStar } from 'react-icons/fa'; // Importing icons for better visuals
+import useAxios from "../hooks/useAxios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Fetch user's reviews for all trainers
-const fetchUserReviews = async (userEmail) => {
-  const { data } = await axios.get(`${API_URL}/trainer-reviews`, {
+const fetchUserReviews = async (userEmail , axiosSecure) => {
+  const { data } = await axiosSecure.get(`${API_URL}/trainer-reviews`, {
     params: { reviewerEmail: userEmail },
   });
   return data;
 };
 
-const fetchBookingLogs = async (userEmail) => {
-  const { data } = await axios.get(`${API_URL}/booking-logs`, {
+const fetchBookingLogs = async (userEmail , axiosSecure) => {
+  const { data } = await axiosSecure.get(`${API_URL}/booking-logs`, {
     params: { userEmail },
   });
   return data;
 };
 
-const fetchTrainerById = async (trainerId) => {
-  const { data } = await axios.get(`${API_URL}/trainers/${trainerId}`);
+const fetchTrainerById = async (trainerId , axiosSecure) => {
+  const { data } = await axiosSecure.get(`${API_URL}/trainers/${trainerId}`);
   return data;
 };
 
 const BookedTrainersPage = () => {
   const { user } = useAuth();
-
+const axiosSecure = useAxios()
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTrainerEmail, setCurrentTrainerEmail] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
@@ -48,7 +49,7 @@ const BookedTrainersPage = () => {
     isError: reviewsError,
   } = useQuery({
     queryKey: ["userReviews", user?.email],
-    queryFn: () => fetchUserReviews(user.email),
+    queryFn: () => fetchUserReviews(user.email , axiosSecure),
     enabled: !!user?.email,
   });
 
@@ -66,14 +67,14 @@ const BookedTrainersPage = () => {
     isError: bookingsError,
   } = useQuery({
     queryKey: ["bookingLogs", user?.email],
-    queryFn: () => fetchBookingLogs(user.email),
+    queryFn: () => fetchBookingLogs(user.email , axiosSecure),
     enabled: !!user?.email,
   });
 
   const trainersQueries = useQueries({
     queries: (bookings || []).map((booking) => ({
       queryKey: ["trainer", booking.trainerId],
-      queryFn: () => fetchTrainerById(booking.trainerId),
+      queryFn: () => fetchTrainerById(booking.trainerId , axiosSecure),
       enabled: !!booking.trainerId,
     })),
   });
@@ -143,7 +144,7 @@ const BookedTrainersPage = () => {
     setSubmitSuccess(null);
 
     try {
-      await axios.post(`${API_URL}/trainer-reviews`, {
+      await axiosSecure.post(`${API_URL}/trainer-reviews`, {
         trainerEmail: currentTrainerEmail,
         reviewerEmail: user.email,
         reviewerName: user.displayName || "Anonymous",

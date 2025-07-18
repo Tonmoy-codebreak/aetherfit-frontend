@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import BannerSection from '../Components/HomePageComponents/BannerSection';
 import FeatureSection from '../Components/HomePageComponents/FeatureSection';
 import AboutUsSection from '../Components/HomePageComponents/AboutUsSection';
@@ -9,6 +9,9 @@ import LatestPost from '../Components/HomePageComponents/LatestPost';
 import TeamSection from '../Components/HomePageComponents/TeamSection';
 
 const HomePage = () => {
+    useEffect(() => {
+            document.title = "AetherFit"; 
+        }, []);
     return (
         <div className=' '>
          

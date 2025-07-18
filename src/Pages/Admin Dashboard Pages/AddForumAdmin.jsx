@@ -2,23 +2,24 @@ import React, { useState, useEffect } from "react";
 
 import Swal from "sweetalert2";
 import { IoEye } from "react-icons/io5";
-import { useNavigate } from "react-router"; 
-import { FaPlus, FaTrashAlt, FaTimes, FaRegThumbsUp } from 'react-icons/fa'; 
+import { useNavigate } from "react-router";
+import { FaPlus, FaTrashAlt, FaTimes, FaRegThumbsUp } from 'react-icons/fa';
 import useAxios from "../../hooks/useAxios";
 
 const AddForumAdmin = () => {
-  const axiosSecure = useAxios()
+  const axiosSecure = useAxios();
   const [forums, setForums] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newForum, setNewForum] = useState({
     title: "",
-    content: "", // Keep content in state as logic uses it
+    content: "",
     image: "",
   });
 
   const [photoFile, setPhotoFile] = useState(null);
   const [previewURL, setPreviewURL] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added for submit button loading state
+  const [imageSize, setImageSize] = useState(0); // New state for image size in bytes
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,7 +32,6 @@ const AddForumAdmin = () => {
       setForums(res.data);
     } catch (err) {
       console.error("Error fetching forums:", err);
-      // Optionally show a user-friendly error
       Swal.fire({
         title: '<span style="color:#faba22">Error</span>',
         text: "Failed to load forums. Please try again later.",
@@ -51,6 +51,7 @@ const AddForumAdmin = () => {
     const file = e.target.files[0];
     setPhotoFile(file);
     setPreviewURL(file ? URL.createObjectURL(file) : "");
+    setImageSize(file ? file.size : 0); // Set the image size in bytes
   };
 
   const toBase64 = (file) =>
@@ -63,34 +64,47 @@ const AddForumAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true); // Set loading state
+    setIsSubmitting(true);
 
     try {
       let finalImageURL = newForum.image;
 
       if (photoFile) {
         const base64Image = await toBase64(photoFile);
-        const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
-          imageBase64: base64Image,
-        });
+        const uploadRes = await axiosSecure.post(
+          `${import.meta.env.VITE_API_URL}/upload-image`,
+          {
+            imageBase64: base64Image,
+          },
+          {
+            timeout: 30000
+          }
+        );
         finalImageURL = uploadRes.data.url || finalImageURL;
       }
 
-      const authorId = "admin123"; // This is hardcoded as per original logic
-      const authorName = "Admin User"; // This is hardcoded as per original logic
-      const authorRole = "Admin"; // This is hardcoded as per original logic
+      const authorId = "admin123";
+      const authorName = "Admin User";
+      const authorRole = "Admin";
 
-      await axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
-        ...newForum,
-        image: finalImageURL,
-        authorId,
-        authorName,
-        authorRole,
-      });
+      await axiosSecure.post(
+        `${import.meta.env.VITE_API_URL}/admin/forums`,
+        {
+          ...newForum,
+          image: finalImageURL,
+          authorId,
+          authorName,
+          authorRole,
+        },
+        {
+          timeout: 30000
+        }
+      );
 
-      setNewForum({ title: "", content: "", image: "" }); // content state is still needed by logic
+      setNewForum({ title: "", content: "", image: "" });
       setPhotoFile(null);
       setPreviewURL("");
+      setImageSize(0); // Reset image size after successful upload
       setIsModalOpen(false);
       Swal.fire({
         title: '<span style="color:#faba22">Forum Added!</span>',
@@ -101,7 +115,7 @@ const AddForumAdmin = () => {
         confirmButtonColor: "#faba22",
       });
 
-      fetchForums(); // Re-fetch forums to update the list
+      fetchForums();
     } catch (err) {
       console.error("Forum add error:", err);
       Swal.fire({
@@ -113,7 +127,7 @@ const AddForumAdmin = () => {
         confirmButtonColor: "#faba22",
       });
     } finally {
-      setIsSubmitting(false); // Reset loading state
+      setIsSubmitting(false);
     }
   };
 
@@ -141,7 +155,7 @@ const AddForumAdmin = () => {
           color: "#faba22",
           confirmButtonColor: "#faba22",
         });
-        fetchForums(); // Re-fetch forums to update the list
+        fetchForums();
       } catch (error) {
         console.error("Delete forum error:", error);
         Swal.fire({
@@ -154,6 +168,16 @@ const AddForumAdmin = () => {
         });
       }
     }
+  };
+
+  // Helper function to format bytes into readable units (KB, MB)
+  const formatBytes = (bytes, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
   return (
@@ -223,11 +247,11 @@ const AddForumAdmin = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
                     {forum.authorName || 'N/A'} ({forum.authorRole || 'N/A'})
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300 gap-1"> 
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300 gap-1">
                     <span className="flex items-center  gap-1 text-green-400">
                       <FaRegThumbsUp /> {forum.totalUpVotes || 0}
                     </span>
-                    
+
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
                     <div className="flex items-center gap-3">
@@ -258,14 +282,14 @@ const AddForumAdmin = () => {
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in"
-          onClick={() => setIsModalOpen(false)} // Close modal when clicking outside
+          onClick={() => setIsModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-forum-modal-title"
         >
           <div
             className="bg-zinc-900 rounded-2xl max-w-lg w-full p-8 relative shadow-2xl border border-zinc-700 transform scale-95 animate-scale-in"
-            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsModalOpen(false)}
@@ -279,7 +303,7 @@ const AddForumAdmin = () => {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="modal-title" className="block text-lg font-medium mb-2 text-zinc-300">Title <span className="text-red-500">*</span></label>
+                <label htmlFor="modal-title" className="block text-lg font-medium mb-2  text-zinc-300">Title <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   id="modal-title"
@@ -291,7 +315,7 @@ const AddForumAdmin = () => {
                   className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] text-lg"
                 />
               </div>
-             
+
               <div>
                 <label htmlFor="modal-content" className="block text-lg font-medium mb-2 text-zinc-300">Content <span className="text-red-500">*</span></label>
                 <textarea
@@ -307,7 +331,7 @@ const AddForumAdmin = () => {
               </div>
 
               <div>
-                <label htmlFor="modal-image" className="block text-lg font-medium mb-2 text-zinc-300">Image (Optional)</label>
+                <label htmlFor="modal-image" className="block text-lg font-medium mb-2 text-zinc-300">Image (Max 2MB Recommended)</label>
                 {previewURL && (
                   <div className="mb-4 flex justify-center">
                     <img
@@ -324,6 +348,16 @@ const AddForumAdmin = () => {
                   onChange={handlePhotoChange}
                   className="w-full text-zinc-300 file:mr-5 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 transition-colors duration-200 cursor-pointer"
                 />
+                {imageSize > 0 && ( // Display size only if an image is selected
+                  <p className="text-sm text-zinc-400 mt-2 text-center">
+                    Selected Image Size: <span className={`font-semibold ${imageSize > 2 * 1024 * 1024 ? 'text-red-400' : 'text-green-400'}`}>
+                      {formatBytes(imageSize)}
+                    </span>
+                    {imageSize > 2 * 1024 * 1024 && (
+                      <span className="text-red-400 ml-2"> (Image is too large!)</span>
+                    )}
+                  </p>
+                )}
               </div>
 
               <button

@@ -52,7 +52,7 @@ const ReviewsOfTrainer = () => {
 
   return (
     <section className="bg-black py-24 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="relative z-10 flex flex-col items-center max-w-7xl mx-auto pb-20">
+      <div className="relative z-10 flex flex-col-reverse lg:flex-col items-center max-w-7xl mx-auto pb-20">
         <div className="text-center mb-20">
           <h2 className="text-5xl md:text-5xl font-black text-transparent bg-clip-text bg-[#faba22] font-funnel drop-shadow-2xl tracking-tight leading-tight">
             What Our Members Say
@@ -85,7 +85,7 @@ const ReviewsOfTrainer = () => {
         >
           {reviews.map((review, idx) => (
             <SwiperSlide key={review._id || idx}>
-              <div className="group cursor-pointer">
+              <div className="group cursor-pointer animate-fadeIn">
                 <div className="bg--zinc-900 rounded-3xl shadow-2xl  p-8 md:p-12 flex flex-col-reverse lg:flex-row gap-8 transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_0_60px_rgba(250,186,34,0.2)] hover:border-[#faba22]/30">
                   <div className="flex-1 flex flex-col justify-center">
                     <div className="relative">
@@ -108,7 +108,7 @@ const ReviewsOfTrainer = () => {
                           "https://placehold.co/150x150/3f3f46/fafa00?text=T"
                         }
                         alt={review.trainerName || "Trainer"}
-                        className="w-36 h-36 rounded-full object-cover border-4 border-[#faba22] shadow-lg transition-all duration-700 group-hover:scale-105"
+                        className="w-36 h-36 rounded-full object-cover border-4 border-[#faba22] shadow-lg transition-all duration-700 group-hover:scale-105 animate-scaleIn"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src =
@@ -135,7 +135,7 @@ const ReviewsOfTrainer = () => {
         <div className="flex justify-center items-center space-x-8 mt-8 md:mt-10 lg:mt-12">
           <button
             ref={prevRef}
-            className="custom-prev group bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-[#faba22] hover:to-yellow-500 text-white p-4 rounded-full shadow-xl transition-all duration-500 transform hover:scale-110 hover:shadow-[0_0_30px_rgba(250,186,34,0.4)] border border-zinc-700 hover:border-[#faba22]"
+            className="custom-prev group bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-[#faba22] hover:to-yellow-500 text-white p-4 rounded-full shadow-xl transition-all duration-500 transform hover:scale-110 hover:shadow-[0_0_30px_rgba(250,186,34,0.4)] border border-zinc-700 hover:border-[#faba22] hover:animate-pulse"
             aria-label="Previous Slide"
           >
             <svg
@@ -149,7 +149,7 @@ const ReviewsOfTrainer = () => {
 
           <button
             ref={nextRef}
-            className="custom-next group bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-[#faba22] hover:to-yellow-500 text-white p-4 rounded-full shadow-xl transition-all duration-500 transform hover:scale-110 hover:shadow-[0_0_30px_rgba(250,186,34,0.4)] border border-zinc-700 hover:border-[#faba22]"
+            className="custom-next group bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-[#faba22] hover:to-yellow-500 text-white p-4 rounded-full shadow-xl transition-all duration-500 transform hover:scale-110 hover:shadow-[0_0_30px_rgba(250,186,34,0.4)] border border-zinc-700 hover:border-[#faba22] hover:animate-pulse"
             aria-label="Next Slide"
           >
             <svg
@@ -167,6 +167,45 @@ const ReviewsOfTrainer = () => {
         .swiper-button-prev,
         .swiper-button-next {
           display: none !important;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.6s ease forwards;
+        }
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.85);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.6s ease forwards;
+        }
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 10px rgba(250, 186, 34, 0.6);
+          }
+          50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(250, 186, 34, 1);
+          }
+        }
+        .hover\\:animate-pulse:hover {
+          animation: pulse 1.5s infinite;
         }
       `}</style>
     </section>

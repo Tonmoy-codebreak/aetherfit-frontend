@@ -11,9 +11,8 @@ const LatestPost = () => {
         const fetchLatestPosts = async () => {
             try {
                 setLoading(true);
-                // Fetch the latest 6 posts (default limit in backend route)
                 const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums`);
-                setPosts(response.data.forums); // Access the 'forums' array from the response
+                setPosts(response.data.forums);
             } catch (err) {
                 console.error("Error fetching latest forum posts:", err);
                 setError("Failed to load latest posts. Please try again later.");
@@ -52,40 +51,62 @@ const LatestPost = () => {
     return (
         <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 font-funnel drop-shadow-lg">
+                <h2 className="text-4xl md:text-5xl font-semibold font-funnel text-[#faba22] text-center mb-12 drop-shadow-lg">
                     Latest Community Posts
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                     {posts.map((post) => (
-                        <div
+                        <article
                             key={post._id}
-                            className="bg-zinc-900 rounded-xl shadow-xl border border-zinc-800 overflow-hidden
-                                       transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+                            className="group relative bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 rounded-2xl  shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-lg"
                         >
-                            {post.image && (
+                            {/* Angled overlay */}
+                            <div className="absolute top-0 left-0 w-full h-24 bg-[#faba22] skew-y-[-12deg] origin-top-left opacity-20 pointer-events-none transition-opacity duration-500 group-hover:opacity-0"></div>
+
+                            {post.image ? (
                                 <img
                                     src={post.image}
                                     alt={post.title}
-                                    className="w-full h-48 object-cover object-center rounded-t-xl"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x200/3f3f46/fafa00?text=No+Image"; }}
+                                    className="w-full h-56 object-cover object-center rounded-t-2xl border-b border-[#faba22]"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://placehold.co/400x200/3f3f46/fafa00?text=No+Image";
+                                    }}
                                 />
-                            )}
-                            <div className="p-6">
-                                <h3 className="text-2xl font-semibold text-white mb-2 line-clamp-2">{post.title}</h3>
-                                <p className="text-zinc-400 text-base mb-4 line-clamp-3">{post.content}</p>
-                                <div className="flex items-center justify-between text-zinc-500 text-sm mb-4">
-                                    <span>By: <span className="text-zinc-300">{post.authorName || "Anonymous"}</span></span>
-                                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                            ) : (
+                                <div className="w-full h-56 flex items-center justify-center bg-zinc-800 rounded-t-2xl border-b border-[#faba22] text-[#faba22] text-xl font-semibold">
+                                    No Image
                                 </div>
+                            )}
+
+                            <div className="p-6 flex flex-col justify-between min-h-[220px]">
+                                <header>
+                                    <h3 className="text-white text-2xl font-semibold font-funnel mb-2 line-clamp-2 tracking-wide drop-shadow-lg">
+                                        {post.title}
+                                    </h3>
+                                    <p className="text-zinc-400 text-base mb-4 line-clamp-3 tracking-wide">
+                                        {post.content}
+                                    </p>
+                                </header>
+
+                                <footer className="flex justify-between items-center text-zinc-500 text-sm font-mono mt-auto">
+                                    <span>
+                                        By: <span className="text-[#faba22]">{post.authorName || "Anonymous"}</span>
+                                    </span>
+                                    <time dateTime={post.createdAt} className="text-[#faba22]">
+                                        {new Date(post.createdAt).toLocaleDateString()}
+                                    </time>
+                                </footer>
+
                                 <a
-                                    href={`/forum/${post._id}`} // Assuming a route for single forum post details
-                                    className="inline-block bg-[#faba22] text-black px-5 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-colors duration-200"
+                                    href={`/forum/${post._id}`}
+                                    className="mt-6 block text-center bg-[#faba22] text-black font-semibold py-3 rounded-xl shadow-md transition-colors duration-300 hover:bg-yellow-400 hover:shadow-[0_0_15px_rgba(250,186,34,0.9)]"
                                 >
                                     Read More
                                 </a>
                             </div>
-                        </div>
+                        </article>
                     ))}
                 </div>
             </div>

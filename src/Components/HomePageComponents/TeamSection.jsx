@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-
 import useAxios from '../../hooks/useAxios';
 
 const TeamSection = () => {
     const [trainers, setTrainers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const axiosSecure = useAxios()
+    const axiosSecure = useAxios();
+
     useEffect(() => {
         const fetchTeamTrainers = async () => {
             try {
                 setLoading(true);
-                // Fetch data from the backend route that provides trainer profiles
                 const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/team-trainers`);
                 setTrainers(response.data);
             } catch (err) {
@@ -21,11 +20,9 @@ const TeamSection = () => {
                 setLoading(false);
             }
         };
-
         fetchTeamTrainers();
-    }, []); // Empty dependency array means this runs once on component mount
+    }, []);
 
-    // Loading state UI
     if (loading) {
         return (
             <div className="min-h-[400px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
@@ -34,7 +31,6 @@ const TeamSection = () => {
         );
     }
 
-    // Error state UI
     if (error) {
         return (
             <div className="min-h-[400px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
@@ -43,7 +39,6 @@ const TeamSection = () => {
         );
     }
 
-    // No trainers found state UI
     if (trainers.length === 0) {
         return (
             <div className="min-h-[400px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
@@ -53,50 +48,54 @@ const TeamSection = () => {
     }
 
     return (
-        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+        <section className="bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8 font-sans overflow-hidden">
             <div className="max-w-7xl mx-auto">
-                {/* Section Title */}
                 <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 font-funnel drop-shadow-lg">
                     Meet Our Expert Trainers
                 </h2>
 
-                {/* Trainers Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {trainers.map((trainer) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {trainers.map((trainer, index) => (
                         <div
                             key={trainer._id}
-                            className="bg-zinc-900 rounded-xl shadow-xl border border-zinc-800 overflow-hidden
-                                       transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                            className="group bg-zinc-900 rounded-xl shadow-lg border border-zinc-800 overflow-hidden flex flex-col sm:flex-row
+                                       transition-transform duration-300 hover:scale-[1.02] hover:border-[#faba22]"
+                            style={{ animationDelay: `${index * 0.1}s` }}
                         >
-                            {/* Trainer Photo */}
-                            <img
-                                src={trainer.photoURL || "https://placehold.co/400x300/3f3f46/fafa00?text=Trainer+Photo"}
-                                alt={trainer.name || "Trainer"}
-                                className="w-full h-64 object-cover object-center rounded-t-xl"
-                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x300/3f3f46/fafa00?text=Trainer+Photo"; }}
-                            />
-                            <div className="p-6">
-                                {/* Trainer Name */}
-                                <h3 className="text-2xl font-semibold text-white mb-2">{trainer.name || "N/A"}</h3>
-                                {/* Trainer Bio */}
-                                <p className="text-zinc-400 text-base mb-4 line-clamp-3">{trainer.bio || "No biography provided."}</p>
-                                {/* Trainer Expertise (Skills) */}
-                                {trainer.expertise && trainer.expertise.length > 0 && (
-                                    <div className="pt-4 border-t border-zinc-700">
-                                        <p className="text-[#faba22] font-bold text-lg mb-2">Expertise:</p>
+                            {/* Left Side */}
+                            <div className="flex flex-col items-center justify-center bg-zinc-950 p-4 sm:p-5 w-full sm:w-[40%] flex-shrink-0">
+                                <img
+                                    src={trainer.photoURL || "https://placehold.co/400x400/3f3f46/fafa00?text=Trainer"}
+                                    alt={trainer.name || "Trainer"}
+                                    className="w-24 h-24 object-cover rounded-full border-2 border-[#faba22] mb-3"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x400/3f3f46/fafa00?text=Trainer"; }}
+                                />
+                                <h3 className="text-lg sm:text-xl font-bold text-white text-center">{trainer.name || "N/A"}</h3>
+                            </div>
+
+                            {/* Right Side */}
+                            <div className="flex-1 flex flex-col justify-between bg-zinc-900 p-4 sm:p-5 group-hover:bg-[#faba22] group-hover:text-black">
+                                {trainer.expertise?.length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-[#faba22] font-semibold mb-1 group-hover:text-black">Expertise:</p>
                                         <ul className="flex flex-wrap gap-2">
                                             {trainer.expertise.map((skill, idx) => (
-                                                <li key={idx} className="bg-zinc-800 text-zinc-300 text-sm px-3 py-1 rounded-full">
+                                                <li key={idx} className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded
+                                                    group-hover:bg-black group-hover:text-white transition-colors duration-300">
                                                     {skill}
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
                                 )}
-                                {/* Optional: Display years of experience if available */}
+
+                                <p className="text-zinc-400 text-sm line-clamp-4 mb-3 group-hover:text-black">
+                                    {trainer.bio || "No biography provided."}
+                                </p>
+
                                 {trainer.yearsOfExperience && trainer.yearsOfExperience > 0 && (
-                                    <p className="text-zinc-400 text-sm mt-4">
-                                        <span className="font-semibold text-[#faba22]">Experience:</span> {trainer.yearsOfExperience} years
+                                    <p className="text-zinc-400 text-xs group-hover:text-black">
+                                        <span className="font-semibold text-[#faba22] group-hover:text-black">Experience:</span> {trainer.yearsOfExperience} years
                                     </p>
                                 )}
                             </div>
@@ -104,6 +103,15 @@ const TeamSection = () => {
                     ))}
                 </div>
             </div>
+
+            <style jsx>{`
+                .line-clamp-4 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 4;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+            `}</style>
         </section>
     );
 };

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router"; 
-import { FaTimes } from 'react-icons/fa'; // Import FaTimes for the close button
+import { FaTimes } from 'react-icons/fa'; 
 
 // Constants
 const CLASSES_PER_PAGE = 6; // As per requirement
@@ -75,6 +75,9 @@ const fetchClasses = async ({ queryKey }) => {
 };
 
 const AllClassesPage = () => {
+    useEffect(() => {
+        document.title = "AetherFit | Classes"; 
+    }, []);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState(""); // Actual search query used in API call
     const [searchInput, setSearchInput] = useState(""); // Input field value
@@ -111,8 +114,8 @@ const AllClassesPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16 pt-20"> {/* Added pt-20 for header clearance */}
-            <h1 className="text-5xl md:text-6xl font-bold mb-12 text-center text-white font-funnel drop-shadow-lg">
+        <div className="min-h-screen pb-32 bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16 pt-20"> {/* Added pt-20 for header clearance */}
+            <h1 className="text-5xl pt-20 md:text-5xl font-bold mb-12 text-center text-white font-funnel drop-shadow-lg">
                 Explore Our Classes
             </h1>
 
@@ -124,12 +127,12 @@ const AllClassesPage = () => {
                     onChange={handleSearchChange}
                     placeholder="Search classes by name..."
                     className="flex-grow px-5 py-3 rounded-l-full bg-zinc-800 text-white placeholder-zinc-500
-                                 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-700 text-lg"
+                                focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-700 text-lg"
                 />
                 <button
                     type="submit"
                     className="px-6 py-3 rounded-r-full bg-[#faba22] text-black font-bold text-lg
-                                 hover:bg-yellow-500 transition-colors duration-200 shadow-md"
+                                hover:bg-yellow-500 transition-colors duration-200 shadow-md"
                 >
                     Search
                 </button>
@@ -162,16 +165,16 @@ const AllClassesPage = () => {
                         {data.classes.map((cls) => (
                             <div
                                 key={cls._id}
-                                className="bg-zinc-900 rounded-2xl p-4 shadow-2xl border border-zinc-800 {/* Changed p-6 to p-4 */}
-                                           flex flex-col transform transition-all duration-300 hover:scale-[1.02] hover:shadow-yellow-900/50
-                                           relative overflow-hidden group"
+                                className="bg-zinc-900 rounded-2xl p-4 shadow-2xl border border-zinc-800 
+                                       flex flex-col transform transition-all duration-300 hover:scale-[1.02] hover:shadow-yellow-900/50
+                                       relative overflow-hidden group"
                             >
                                 {/* Class Image */}
                                 <div className="relative overflow-hidden rounded-xl mb-4 border border-zinc-700 aspect-w-16 aspect-h-9">
                                     <img
                                         src={cls.image || "https://placehold.co/600x400/363636/DDDDDD?text=No+Class+Image"}
                                         alt={cls.name}
-                                        className="w-full h-36 object-cover group-hover:scale-110 transition-transform duration-300 {/* Changed h-48 to h-36 */}"
+                                        className="w-full h-36 object-cover group-hover:scale-110 transition-transform duration-300"
                                         loading="lazy"
                                         onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/363636/DDDDDD?text=No+Class+Image"; }}
                                     />
@@ -194,7 +197,7 @@ const AllClassesPage = () => {
                                                     to={`/trainers/${trainer._id}`}
                                                     title={trainer.name || "Trainer"}
                                                     className="block w-16 h-16 rounded-full overflow-hidden border-2 border-zinc-700
-                                                               hover:border-[#faba22] transition-colors duration-200 transform hover:scale-110 shadow-md"
+                                                                hover:border-[#faba22] transition-colors duration-200 transform hover:scale-110 shadow-md"
                                                 >
                                                     <img
                                                         src={trainer.photoURL || "https://placehold.co/64x64/363636/DDDDDD?text=Trainer"}
@@ -227,8 +230,8 @@ const AllClassesPage = () => {
                                 onClick={() => goToPage(page - 1)}
                                 disabled={page === 1}
                                 className="px-6 py-3 bg-[#faba22] text-black font-bold rounded-lg shadow-md
-                                            hover:bg-yellow-500 transition-colors duration-200
-                                            disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                                hover:bg-yellow-500 transition-colors duration-200
+                                                disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
                             >
                                 Previous
                             </button>
@@ -241,12 +244,12 @@ const AllClassesPage = () => {
                                             key={p}
                                             onClick={() => goToPage(p)}
                                             className={`px-5 py-2 rounded-lg font-semibold shadow-sm
-                                                ${
-                                                    page === p
-                                                        ? "bg-yellow-600 text-black"
-                                                        : "bg-zinc-700 text-white hover:bg-yellow-500 hover:text-black"
-                                                }
-                                                transition-colors duration-200`}
+                                                        ${
+                                                            page === p
+                                                                ? "bg-yellow-600 text-black"
+                                                                : "bg-zinc-700 text-white hover:bg-yellow-500 hover:text-black"
+                                                        }
+                                                        transition-colors duration-200`}
                                         >
                                             {p}
                                         </button>
@@ -258,8 +261,8 @@ const AllClassesPage = () => {
                                 onClick={() => goToPage(page + 1)}
                                 disabled={page === data.totalPages}
                                 className="px-6 py-3 bg-[#faba22] text-black font-bold rounded-lg shadow-md
-                                            hover:bg-yellow-500 transition-colors duration-200
-                                            disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                                hover:bg-yellow-500 transition-colors duration-200
+                                                disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
                             >
                                 Next
                             </button>

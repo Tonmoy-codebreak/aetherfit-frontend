@@ -6,7 +6,7 @@ import useAxios from "../../hooks/useAxios";
 
 const AddForumTrainer = () => {
     const { user: authUser } = useAuth();
-    const axiosSecure = useAxios
+    const axiosSecure = useAxios()
     const navigate = useNavigate();
 
     const [mongoUser, setMongoUser] = useState(null); // State to store MongoDB user data

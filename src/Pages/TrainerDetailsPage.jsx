@@ -26,6 +26,9 @@ const getSocialIcon = (url) => {
 };
 
 const TrainerDetailsPage = () => {
+    useEffect(() => {
+        document.title = "AetherFit | Trainer";
+    }, []);
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -111,7 +114,7 @@ const TrainerDetailsPage = () => {
         fetchTrainer();
         fetchBookedSlots();
         checkUserStatus(); // Call the new combined check
-    }, [id, user?.email , axiosSecure]); // Re-run if trainer ID or user email changes
+    }, [id, user?.email, axiosSecure]); // Re-run if trainer ID or user email changes
 
     const isSlotBooked = (day, timeRange) => {
         return bookedSlots.some(
@@ -160,9 +163,6 @@ const TrainerDetailsPage = () => {
         fromAMPM,
         toAMPM,
         socialLinks = [],
-        additionalInfo = "None", // eslint-disable-line no-unused-vars
-        bookingCount = 0, // Keeping these for potential future display
-        status = "N/A",   // Keeping these for potential future display
         slots = [],
     } = trainer;
 
@@ -178,36 +178,42 @@ const TrainerDetailsPage = () => {
 
     return (
         <div className="min-h-screen bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16">
-            <div className="max-w-6xl mx-auto rounded-2xl shadow-2xl p-8 md:p-12">
-                <h1 className="text-5xl md:text-6xl font-bold mb-10 text-center text-white font-funnel drop-shadow-lg">
-                    {name}
+            <div className="max-w-7xl mx-auto rounded-2xl shadow-2xl p-8 md:p-12 ">
+                {/* Main Title */}
+                <h1 className="text-5xl md:text-6xl font-extrabold mb-12 text-center text-white font-funnel drop-shadow-lg">
+                    Trainer <span className="text-[#faba22]">Profile</span>
                 </h1>
 
-                <div className="flex flex-col md:flex-row gap-12 mb-12"> {/* Added mb-12 to separate from CTA */}
+                {/* Main Content Sections (Left and Right) */}
+                <div className="flex flex-col md:flex-row gap-12 mb-16">
                     {/* Left Column: Trainer Info */}
                     <div className="md:w-1/2 space-y-8">
-                        <div className="relative overflow-hidden rounded-xl border border-zinc-700 shadow-lg">
+                        {/* Trainer Photo */}
+                        <div className="relative overflow-hidden rounded-xl border border-zinc-700 shadow-xl transform transition-transform duration-300 hover:scale-[1.01]">
                             <img
                                 src={photoURL}
                                 alt={name}
-                                className="w-full h-80 object-cover rounded-xl"
+                                className="w-full h-96 object-cover rounded-xl"
                                 onError={(e) => (e.target.src = "https://placehold.co/600x400/363636/DDDDDD?text=No+Image")}
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-transparent opacity-80"></div>
+                            <h2 className="absolute bottom-6 left-6 text-4xl font-bold text-white drop-shadow-lg">{name}</h2>
                         </div>
 
                         {/* Bio Section */}
-                        <div>
-                            <h2 className="text-3xl font-semibold mb-3 text-white">Bio</h2>
-                            <p className="text-zinc-300 leading-relaxed">{bio}</p>
+                        <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
+                            <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">About Me</h3>
+                            <p className="text-zinc-300 leading-relaxed text-base">{bio}</p>
                         </div>
 
                         {/* Skills Section */}
-                        <div>
-                            <h2 className="text-3xl font-semibold mb-3 text-white">Skills</h2>
+                        <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
+                            <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Expertise</h3>
                             {displaySkills.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-3">
                                     {displaySkills.map((skill, idx) => (
-                                        <span key={idx} className="px-4 py-1.5 rounded-full bg-zinc-700 text-zinc-200 text-sm font-medium shadow-sm">
+                                        <span key={idx} className="px-5 py-2 rounded-full bg-zinc-700 text-zinc-200 text-sm font-medium shadow-md
+                                                                    transition-all duration-300 hover:bg-[#faba22] hover:text-black cursor-default">
                                             {skill}
                                         </span>
                                     ))}
@@ -217,27 +223,27 @@ const TrainerDetailsPage = () => {
                             )}
                         </div>
 
-                        {/* Experience */}
-                        <div>
-                            <h2 className="text-3xl font-semibold mb-3 text-white">Experience</h2>
-                            <p className="text-zinc-300">{yearsOfExperience ? `${yearsOfExperience} years` : "N/A"}</p>
-                        </div>
-
-                        {/* Availability */}
-                        <div>
-                            <h2 className="text-3xl font-semibold mb-3 text-white">Availability</h2>
-                            <p className="text-zinc-300">
-                                <strong className="text-white">Days:</strong> {availableDays.length > 0 ? availableDays.join(", ") : "N/A"}
-                            </p>
-                            <p className="text-zinc-300">
-                                <strong className="text-white">Time:</strong> {formattedAvailableTime}
-                            </p>
+                        {/* Experience & Availability Section */}
+                        <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Experience</h3>
+                                <p className="text-zinc-300 text-lg">{yearsOfExperience ? `${yearsOfExperience} years of experience` : "N/A"}</p>
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Availability</h3>
+                                <p className="text-zinc-300 text-lg">
+                                    <strong className="text-white">Days:</strong> {availableDays.length > 0 ? availableDays.join(", ") : "N/A"}
+                                </p>
+                                <p className="text-zinc-300 text-lg">
+                                    <strong className="text-white">Time:</strong> {formattedAvailableTime}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Social Links */}
-                        <div>
-                            <h2 className="text-3xl font-semibold mb-3 text-white">Connect with {name.split(' ')[0]}</h2>
-                            <div className="flex gap-5 flex-wrap">
+                        <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
+                            <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Connect with {name.split(' ')[0]}</h3>
+                            <div className="flex gap-6 flex-wrap">
                                 {Array.isArray(socialLinks) && socialLinks.length > 0 ? (
                                     socialLinks.map((linkObj, idx) => {
                                         const Icon = getSocialIcon(linkObj.url);
@@ -248,10 +254,10 @@ const TrainerDetailsPage = () => {
                                                 href={linkObj.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[#faba22] hover:text-yellow-400 transition-colors duration-200 transform hover:scale-125"
-                                                title={linkObj.platform || 'Social Link'}
+                                                className="text-zinc-400 hover:text-[#faba22] transition-colors duration-200 transform hover:scale-125"
+                                                title={`Visit ${name.split(' ')[0]}'s ${linkObj.platform || 'Social'} profile`}
                                             >
-                                                <Icon size={30} />
+                                                <Icon size={32} />
                                             </a>
                                         );
                                     })
@@ -260,44 +266,46 @@ const TrainerDetailsPage = () => {
                                 )}
                             </div>
                         </div>
-
-
                     </div>
 
                     {/* Right Column: Available Slots */}
-                    <div className="md:w-1/2"> {/* Removed flex-col as it's no longer needed for vertical stacking with CTA */}
-                        <h2 className="text-4xl font-semibold mb-8 text-center text-white font-funnel">Available Slots</h2>
+                    <div className="md:w-1/2 bg-zinc-900 p-8 rounded-xl shadow-xl border border-zinc-800">
+                        <h2 className="text-4xl font-extrabold mb-8 text-center text-white font-funnel">Available Slots</h2>
 
                         {slots.length === 0 ? (
-                            <p className="text-zinc-400 text-center text-lg italic py-10 rounded-lg bg-zinc-800 border border-zinc-700 shadow-inner">
+                            <p className="text-zinc-400 text-center text-lg italic py-16 rounded-lg bg-zinc-800 border border-zinc-700 shadow-inner">
                                 No available slots at the moment. Please check back later!
                             </p>
                         ) : (
-                            <div className="flex flex-wrap gap-4 justify-center p-4 bg-zinc-800 rounded-lg border border-zinc-700 shadow-inner">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700 shadow-inner">
                                 {slots
                                     .filter(slot => slot && slot.day && slot.timeRange)
                                     .map((slot, idx) => {
                                         const booked = isSlotBooked(slot.day, slot.timeRange);
-                                        // MODIFIED: Added currentUserRole === "trainer" to the disabled condition
-                                        const isDisabledForTrainer = currentUserRole === "trainer";
+                                        const isDisabledForTrainer = currentUserRole === "trainer"; // Disable if current user is a trainer
                                         return (
                                             <button
                                                 key={idx}
                                                 disabled={booked || isDisabledForTrainer} // Disable if booked OR if current user is a trainer
                                                 onClick={() => !booked && !isDisabledForTrainer && navigate(`/booking/${id}/${slot.day}/${encodeURIComponent(slot.timeRange)}`)}
                                                 className={`
-                                                    px-6 py-3 rounded-lg font-semibold flex items-center gap-2 text-lg
-                                                    transition-all duration-300 shadow-md transform hover:-translate-y-1
+                                                    px-6 py-4 rounded-xl font-bold flex flex-col items-center justify-center text-lg text-center
+                                                    transition-all duration-300 shadow-md transform hover:-translate-y-1 hover:shadow-lg
                                                     ${
                                                         booked || isDisabledForTrainer
                                                             ? "bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-70"
-                                                            : "bg-[#faba22] text-black hover:bg-yellow-500 hover:shadow-lg"
+                                                            : "bg-[#faba22] text-black hover:bg-yellow-500"
                                                     }
                                                 `}
                                                 title={slot.slotName || `${slot.day} ${slot.timeRange}`}
                                             >
-                                                {/* Display slotName instead of timeRange */}
-                                                {slot.slotName} {booked && <IoMdDoneAll size={24} color="#22c55e" />}
+                                                <span className="text-xl mb-1">{slot.slotName}</span>
+                                                <span className="text-sm font-normal opacity-80">{slot.day}</span>
+                                                {booked && (
+                                                    <div className="mt-2 flex items-center text-green-400">
+                                                        <IoMdDoneAll size={24} className="mr-2" /> Booked
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -306,24 +314,27 @@ const TrainerDetailsPage = () => {
                     </div>
                 </div>
 
-                {/* NEW: Standalone "Become a Trainer" CTA Section */}
-                { currentUserRole !== "admin" && ( // Only show if user is logged in and not an admin
-                    <div className="mt-16 p-8 bg-zinc-800 rounded-xl shadow-xl text-center border border-zinc-700">
-                        <h2 className="text-3xl font-semibold mb-4 text-white font-funnel">Want to Help Others?</h2>
-                        <p className="mb-6 text-zinc-300 leading-relaxed">Join our team of certified trainers and share your expertise to inspire and guide our community towards their fitness goals.</p>
+                {/* NEW: Standalone "Want to Help Others?" CTA Section */}
+                {currentUserRole !== "admin" && ( // Only show if user is logged in and not an admin
+                    <div className="mt-16 p-10 bg-gradient-to-br from-zinc-800 to-zinc-950 rounded-2xl shadow-2xl text-center border border-zinc-700 animate-fade-in">
+                        <h2 className="text-4xl font-extrabold mb-5 text-white font-funnel">Want to Help Others? 💪</h2>
+                        <p className="mb-8 text-zinc-300 leading-relaxed text-lg max-w-2xl mx-auto">
+                            Join our vibrant team of certified trainers and share your expertise to inspire and guide our community towards their fitness goals. Make a real impact!
+                        </p>
 
                         {!isUserAlreadyTrainerOrApplied ? ( // This condition now correctly checks if user is trainer OR has pending application
                             <button
                                 onClick={() => navigate("/betrainer")}
-                                className="px-8 py-4 rounded-xl font-bold text-xl bg-[#faba22] text-black hover:bg-yellow-500
-                                             transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                                className="px-10 py-5 rounded-full font-extrabold text-xl bg-[#faba22] text-black hover:bg-yellow-500
+                                           transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-2
+                                           focus:outline-none focus:ring-4 focus:ring-[#faba22] focus:ring-opacity-50"
                             >
-                                Become a Trainer
+                                Become a Trainer Today!
                             </button>
                         ) : (
                             <button
                                 disabled
-                                className="px-8 py-4 rounded-xl font-bold text-xl bg-zinc-700 text-zinc-400 cursor-not-allowed shadow-lg"
+                                className="px-10 py-5 rounded-full font-bold text-xl bg-zinc-700 text-zinc-400 cursor-not-allowed shadow-lg"
                             >
                                 {currentUserRole === "trainer" ? "You are already a Trainer!" : "Trainer Application Pending"}
                             </button>

@@ -1,12 +1,90 @@
-# React + Vite
+# 🌟 AetherFit – Revolutionizing Fitness with Technology
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🧾 About the Website
 
-Currently, two official plugins are available:
+**AetherFit** is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) based fitness tracker platform built for a company on a mission to revolutionize the fitness industry. The platform provides a role-based system with Admin, Trainer, and Member experiences — allowing users to book fitness trainers, join curated classes, engage in fitness forums, and track their progress. 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The project was built as part of a major assignment challenge with strict guidelines ensuring:
+- Unique and responsive design
+- Secure authentication & authorization
+- Complete CRUD features with user feedback
+- Stripe-based payment integration
+- Dynamic dashboards based on user roles
+- Community engagement through forums and reviews
 
-## Expanding the ESLint configuration
+Whether you're managing classes, becoming a trainer, or just looking for the perfect coach to guide your journey — **AetherFit** has it all.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+### 🔐 Admin Credentials
+- **Email**: admin@gmail.com  
+- **Password**: thisisadmin  
+
+### 🌍 Live Website
+👉 [Visit AetherFit Live](https://atherfit-1.web.app)
+
+---
+
+## 🚀 Key Features
+
+- 💪 **Role-Based Access Control**  
+  Includes three user roles — Admin, Trainer, and Member — each with their own conditional dashboard and functionality.
+
+- 🧑‍🏫 **Trainer Booking System**  
+  Members can view trainer details, choose available slots, select membership packages (Basic, Standard, Premium), and book trainers with a secure payment flow.
+
+- 💳 **Stripe-Based Payment Integration**  
+  Fully functional Stripe integration for secure and smooth payment processing, with post-payment updates to the database.
+
+- 📊 **Interactive Dashboard**  
+  Each role has a custom dashboard. Admins manage newsletters, trainers, and balance; Trainers manage slots; Members can track bookings and submit reviews.
+
+- 🧾 **Class Management System**  
+  Admins can add classes, and each class dynamically lists up to five trainers who teach that class. Classes are paginated and searchable.
+
+- 👨‍👩‍👧‍👦 **Community Forums**  
+  Members, Trainers, and Admins can engage in discussions via a forum system featuring voting, role badges, and pagination.
+
+- 📝 **Be a Trainer Application Flow**  
+  Members can apply to become trainers by submitting their skills, availability, and profile. Admins can approve or reject applications with feedback.
+
+- 🌟 **Homepage Highlights**  
+  Includes Featured Classes (sorted by popularity), Team section, Testimonials carousel, Newsletter signup, and Community posts—all dynamic and connected to the database.
+
+- 📦 **Newsletter Subscription**  
+  Anyone can subscribe to the newsletter without logging in. Subscriptions are saved in the backend and visualized in the Admin panel.
+
+- 🔐 **Secure API & Route Protection with JWT**  
+  Private routes are fully secured using JWT stored in localStorage. Unauthorized access triggers proper 401/403 responses.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React.js, Tailwind CSS, React Router, TanStack Query, SweetAlert2  
+- **Backend**: Node.js, Express.js, MongoDB, Firebase Auth, Stripe  
+- **Libraries Used**: React Select, Recharts, Swiper.js
+
+
+
+---
+
+## ✅ Best Practices Followed
+
+- 🔒 Environment variables used for Firebase & MongoDB credentials  
+- 🔁 Protected routes persist state across reloads  
+- 📱 Fully responsive on mobile, tablet, and desktop  
+- 📈 Real-time booking count updates  
+- 📣 CRUD operations with toast notifications  
+- 📛 No Lorem Ipsum — Real content throughout  
+- 🧠 Clean, well-documented, and maintainable codebase  
+- 🌐 Dynamic titles  (`AetherFit | PageName`)
+
+---
+
+## 👏 Final Notes
+
+AetherFit stands as a complete, real-world, scalable project built from scratch to showcase professional MERN development. From secure role-based dashboards to polished UI and payment flows, it ticks all the boxes for a production-ready fitness platform.
+
+
+

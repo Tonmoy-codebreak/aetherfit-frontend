@@ -38,11 +38,14 @@ import ManageSlot from "../Pages/Trainer Dashboard pages/ManageSlot";
 import DefaultMember from "../Layouts/DefaultMember";
 import DefaultTrainer from "../Layouts/DefaultTrainer";
 import DefaulltAdmin from "../Layouts/DefaulltAdmin";
+import ErrorPage from "../Pages/ErrorPage";
+import UnAuthorizedPage from "../Pages/UnAuthorizedPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
+    errorElement : <ErrorPage></ErrorPage>,
     children: [
       { path: "/", element: <HomePage /> },
       {
@@ -65,6 +68,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/auth",
+    errorElement: <ErrorPage></ErrorPage>,
     element: <AuthLayout />,
     children: [
       { path: "login", element: <LoginPage /> },
@@ -73,6 +77,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
+    errorElement: <ErrorPage></ErrorPage>,
     element: <PrivateRoute>  <DashboardLayout /></PrivateRoute>,
     children: [
       {
@@ -112,6 +117,10 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/unauthorizedaccess",
+    element: <UnAuthorizedPage></UnAuthorizedPage>
+  }
 ]);
 
 export default router;

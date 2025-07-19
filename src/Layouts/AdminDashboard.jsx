@@ -1,19 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router"; 
+import { NavLink, Outlet } from "react-router";
 import {
     FaHome, FaUsers, FaUserTie, FaUserCheck,
     FaDollarSign, FaPlusCircle, FaComments,
     FaBars, FaTimes
 } from 'react-icons/fa';
+import useAdminHook from "../hooks/useAdminHook"; 
 
 const AdminDashboard = () => {
-      useEffect(() => {
-            document.title = "Admin Dashboard"; 
-        }, []);
+    const { loading: adminHookLoading } = useAdminHook(); 
+    useEffect(() => {
+        document.title = "Admin Dashboard";
+    }, []);
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+    // IMPORTANT: Conditional Rendering for Loading State
+    if (adminHookLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+                <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
+                <p className="text-[#faba22] ml-4 text-xl">Loading admin dashboard...</p>
+            </div>
+        );
+    }
+
+    // Render the dashboard content only if not loading
     return (
         <div className="flex min-h-screen bg-zinc-950 text-white w-full font-inter">
 

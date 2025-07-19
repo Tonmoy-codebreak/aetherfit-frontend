@@ -2,17 +2,7 @@
 
 ## 🧾 About the Website
 
-**AetherFit** is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) based fitness tracker platform built for a company on a mission to revolutionize the fitness industry. The platform provides a role-based system with Admin, Trainer, and Member experiences — allowing users to book fitness trainers, join curated classes, engage in fitness forums, and track their progress. 
-
-The project was built as part of a major assignment challenge with strict guidelines ensuring:
-- Unique and responsive design
-- Secure authentication & authorization
-- Complete CRUD features with user feedback
-- Stripe-based payment integration
-- Dynamic dashboards based on user roles
-- Community engagement through forums and reviews
-
-Whether you're managing classes, becoming a trainer, or just looking for the perfect coach to guide your journey — **AetherFit** has it all.
+**AetherFit** is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) based fitness tracker platform built for a company on a mission to revolutionize the fitness industry. The platform provides a role-based system with Admin, Trainer, and Member experiences while allowing users to book fitness trainers, join curated classes, engage in fitness forums, and track their progress. Whether you're managing classes, becoming a trainer, or just looking for the perfect coach to guide your journey — **AetherFit** has it all.
 
 ---
 

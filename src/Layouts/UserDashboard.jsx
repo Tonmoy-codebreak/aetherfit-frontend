@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router"; 
 
 import { FaUser, FaClipboardList, FaUsers, FaHome, FaBars, FaTimes } from 'react-icons/fa';
 
 const UserDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+      useEffect(() => {
+            document.title = "Member Dashboard"; 
+        }, []);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 

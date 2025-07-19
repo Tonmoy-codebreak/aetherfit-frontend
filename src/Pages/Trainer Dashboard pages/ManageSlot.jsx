@@ -13,6 +13,10 @@ const ManageSlot = () => {
   const [error, setError] = useState(null);
   const [trainerProfileId, setTrainerProfileId] = useState(null);
 
+  // State for the delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState(null); // Stores the full slot object to delete
+
   const fetchTrainerSlots = async () => {
     if (!user?.email) {
       setLoading(false);
@@ -37,30 +41,42 @@ const ManageSlot = () => {
     fetchTrainerSlots();
   }, [user, axiosSecure]);
 
-  const handleDeleteSlot = async (slotDay, slotTimeRange) => {
-    if (!trainerProfileId) {
-      Swal.fire('Error', 'Trainer ID not found. Cannot delete slot.', 'error');
+  // Function to open the delete confirmation modal
+  const openDeleteConfirmationModal = (slot) => {
+    setSlotToDelete(slot);
+    setShowDeleteModal(true);
+  };
+
+  // Function to handle the actual deletion after modal confirmation
+  const confirmDeletion = async () => {
+    if (!trainerProfileId || !slotToDelete) {
+      Swal.fire('Error', 'Trainer ID or slot information missing.', 'error');
       return;
     }
 
     Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      title: 'Are you absolutely sure?',
+      text: "This action cannot be undone! If users have booked this slot, their bookings will be affected.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonColor: '#d33', // Red color for delete confirmation
+      cancelButtonColor: '#3085d6', // Blue for cancel
+      confirmButtonText: 'Yes, delete it permanently!'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // Encode slotTimeRange for URL safety
+          const encodedSlotTimeRange = encodeURIComponent(slotToDelete.timeRange);
           const response = await axiosSecure.patch(
-            `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerProfileId}/slots/${encodeURIComponent(slotTimeRange)}/delete`,
-            { day: slotDay }
+            `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerProfileId}/slots/${encodedSlotTimeRange}/delete`,
+            { day: slotToDelete.day }
           );
+
           if (response.data?.message) {
-            Swal.fire('Deleted!', 'Your slot has been deleted.', 'success');
-            fetchTrainerSlots();
+            Swal.fire('Deleted!', 'The slot has been successfully deleted.', 'success');
+            setShowDeleteModal(false); // Close the modal
+            setSlotToDelete(null); // Clear the selected slot
+            fetchTrainerSlots(); // Re-fetch slots to update the UI
           }
         } catch (err) {
           console.error('Error deleting slot:', err);
@@ -113,7 +129,6 @@ const ManageSlot = () => {
                   <th className="px-2 py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Time Range</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Duration</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Class</th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Status</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -126,25 +141,11 @@ const ManageSlot = () => {
                     <td className="px-2 py-2 text-xs text-zinc-300 break-words max-w-[100px]">{slot.timeRange || 'N/A'}</td>
                     <td className="px-2 py-2 text-xs text-zinc-300">{slot.slotTime || 'N/A'}</td>
                     <td className="px-2 py-2 text-xs text-zinc-300">{slot.classInfo?.name || 'N/A'}</td>
-                    <td className="px-2 py-2 text-xs">
-                      {slot.bookedBy ? (
-                        <span className="flex flex-col text-green-500 font-semibold text-xs">
-                          <IoMdCheckmarkCircleOutline className="inline-block mr-1" size={14} /> {slot.bookedBy.userName}
-                        </span>
-                      ) : (
-                        <span className="text-yellow-500 font-semibold text-xs">Available</span>
-                      )}
-                    </td>
                     <td className="px-2 py-2 text-left text-xs font-medium">
                       <button
-                        onClick={() => handleDeleteSlot(slot.day, slot.timeRange)}
-                        disabled={!!slot.bookedBy}
-                        className={`p-2 rounded-full ${
-                          slot.bookedBy
-                            ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
-                            : 'bg-red-700 text-white hover:bg-red-800'
-                        }`}
-                        title={slot.bookedBy ? "Cannot delete booked slot" : "Delete Slot"}
+                        onClick={() => openDeleteConfirmationModal(slot)}
+                        className="p-2 rounded-full bg-red-700 text-white hover:bg-red-800"
+                        title="Delete Slot"
                       >
                         <MdDeleteForever size={16} />
                       </button>
@@ -172,27 +173,12 @@ const ManageSlot = () => {
                   <div className="text-zinc-300">{slot.slotTime || 'N/A'}</div>
                   <div className="text-zinc-400 font-medium">Class</div>
                   <div className="text-zinc-300">{slot.classInfo?.name || 'N/A'}</div>
-                  <div className="text-zinc-400 font-medium">Status</div>
-                  <div>
-                    {slot.bookedBy ? (
-                      <span className="flex flex-col items-start text-green-500 font-semibold">
-                        <IoMdCheckmarkCircleOutline className="mr-1 inline-block" size={14} /> {slot.bookedBy.userName}
-                      </span>
-                    ) : (
-                      <span className="text-yellow-500 font-semibold">Available</span>
-                    )}
-                  </div>
                   <div className="text-zinc-400 font-medium">Actions</div>
                   <div>
                     <button
-                      onClick={() => handleDeleteSlot(slot.day, slot.timeRange)}
-                      disabled={!!slot.bookedBy}
-                      className={`p-2 rounded-full ${
-                        slot.bookedBy
-                          ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
-                          : 'bg-red-700 text-white hover:bg-red-800'
-                      }`}
-                      title={slot.bookedBy ? "Cannot delete booked slot" : "Delete Slot"}
+                      onClick={() => openDeleteConfirmationModal(slot)}
+                      className="p-2 rounded-full bg-red-700 text-white hover:bg-red-800"
+                      title="Delete Slot"
                     >
                       <MdDeleteForever size={16} />
                     </button>
@@ -200,6 +186,58 @@ const ManageSlot = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && slotToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 rounded-lg p-6 sm:p-8 w-full max-w-md shadow-2xl border border-zinc-700">
+            <h2 className="text-2xl font-bold text-[#faba22] mb-4">Confirm Slot Deletion</h2>
+            <p className="text-zinc-300 mb-4">
+              You are about to delete the slot: <br />
+              <span className="font-semibold">{slotToDelete.slotName || 'N/A'}</span> on <span className="font-semibold">{slotToDelete.day || 'N/A'}</span> from <span className="font-semibold">{slotToDelete.timeRange || 'N/A'}</span> (Duration: <span className="font-semibold">{slotToDelete.slotTime || 'N/A'}</span>).
+            </p>
+
+            {/* Display all booked users or "No bookings" */}
+            {slotToDelete.bookedBy && slotToDelete.bookedBy.length > 0 ? (
+              <div className="bg-zinc-800 p-4 rounded-md mb-4 border border-zinc-700">
+                <p className="text-red-400 font-semibold mb-2">Warning: This slot is currently booked! ⚠️</p>
+                <p className="text-zinc-300 mb-2">Booked by the following user(s):</p>
+                <ul className="list-disc list-inside text-zinc-300 space-y-1">
+                  {slotToDelete.bookedBy.map((booking, idx) => (
+                    <li key={idx}>
+                      <span className="font-bold text-white">{booking.userName}</span> (Email: {booking.userEmail})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-green-400 mb-4">This slot is currently available (not booked by any user). ✅</p>
+            )}
+
+            <p className="text-zinc-300 mb-6">
+              Deleting this slot will remove it permanently. Please confirm your action.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSlotToDelete(null); // Clear the selected slot when closing modal
+                }}
+                className="px-6 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeletion}
+                className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors duration-200"
+              >
+                Delete Slot
+              </button>
+            </div>
           </div>
         </div>
       )}

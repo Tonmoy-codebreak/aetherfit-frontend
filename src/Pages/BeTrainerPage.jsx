@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 
 import { useAuth } from "../AuthProvider/useAuth";
 import Select from "react-select";
 import Swal from "sweetalert2";
-import useAxios from "../hooks/useAxios"
+import useAxios from "../hooks/useAxios";
+
 const skillsList = [
   "Strength Training",
   "HIIT",
@@ -48,13 +49,14 @@ const experienceOptions = Array.from({ length: 30 }, (_, i) => ({
 const BeTrainerPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const axiosSecure = useAxios()
+  const axiosSecure = useAxios();
 
   const [mongoUser, setMongoUser] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     photoURL: "",
+    age: "",
     skills: [],
     availableDays: [],
     fromHour: hourOptions[6],
@@ -81,12 +83,13 @@ const BeTrainerPage = () => {
           fullName: data.name || user.displayName || "",
           email: data.email || user.email || "",
           photoURL: data.photoURL || user.photoURL || "",
+          age: data.age || "",
         }));
       })
       .catch((err) => {
         console.error("Error fetching user data:", err);
       });
-  }, [user,axiosSecure]);
+  }, [user, axiosSecure]);
 
   const handleCheckboxChange = (key, value) => {
     setFormData((prev) => {
@@ -95,6 +98,14 @@ const BeTrainerPage = () => {
         : [...prev[key], value];
       return { ...prev, [key]: list };
     });
+  };
+
+  const handleAgeChange = (e) => {
+    let value = e.target.value;
+
+    if (value === "" || (Number(value) >= 1 && Number(value) <= 90)) {
+      setFormData((prev) => ({ ...prev, age: value }));
+    }
   };
 
   const handleSocialPlatformChange = (index, selectedOption) => {
@@ -144,7 +155,7 @@ const BeTrainerPage = () => {
       Swal.fire("Error", "Please select at least one available day.", "error");
       return;
     }
-    
+
     const invalidSocialLinks = formData.socialLinks.some(link => link.platform && link.url.trim() === "");
     if (invalidSocialLinks) {
       Swal.fire("Error", "Please enter URLs for all selected social platforms.", "error");
@@ -153,8 +164,11 @@ const BeTrainerPage = () => {
 
     const timeString = `${formData.fromHour.value} ${formData.fromAMPM.value} - ${formData.toHour.value} ${formData.toAMPM.value}`;
 
+
+    const { age, ...restOfFormData } = formData;
+
     const payload = {
-      ...formData,
+      ...restOfFormData,
       availableDays: formData.availableDays.map((item) => item.value),
       fromHour: formData.fromHour.value,
       fromAMPM: formData.fromAMPM.value,
@@ -163,7 +177,7 @@ const BeTrainerPage = () => {
       availableTime: timeString,
       yearsOfExperience: formData.yearsOfExperience.value,
       userId: mongoUser._id,
-      status: "pending", // Always submit as pending
+      status: "pending",
       socialLinks: formData.socialLinks.filter(
         (link) => link.platform && link.url.trim() !== ""
       ),
@@ -200,8 +214,8 @@ const BeTrainerPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white font-inter  p-4 sm:p-6 lg:p-8">
-      {/* Custom styles for react-select components */}
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white font-inter p-4 sm:p-6 lg:p-8">
+
       <style>{`
         .react-select__control {
           background-color: #27272a !important; /* zinc-800 */
@@ -263,9 +277,12 @@ const BeTrainerPage = () => {
         }
       `}</style>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-7xl mx-auto bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 p-8 md:p-12 space-y-10">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-7xl mx-auto  rounded-2xl shadow-2xl  p-8 md:p-12 space-y-10"
+      >
         {formData.photoURL && (
-          <div className="flex justify-center mb-8">
+          <div className="flex pt-20 justify-center mb-8">
             <img
               src={formData.photoURL}
               alt="Profile Preview"
@@ -275,15 +292,25 @@ const BeTrainerPage = () => {
         )}
 
         <h1 className="text-4xl md:text-5xl font-funnel font-bold mb-12 text-center text-[#faba22] drop-shadow-lg">
-          Become a Trainer
+          Become a Trainer{" "}
+          <Link
+            to="/profile" // Assuming '/profile' is your profile page route
+            className="text-2xl p-3 block text-zinc-400 hover:text-[#faba22] transition-colors duration-200"
+          >
+            (Update Profile)
+          </Link>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Left Column */}
           <div className="space-y-8 bg-zinc-800 p-8 rounded-xl shadow-inner border border-zinc-700">
-            <h2 className="text-3xl font-semibold text-white mb-6">Personal Details</h2>
+            <h2 className="text-3xl font-semibold text-white mb-6">
+              Personal Details
+            </h2>
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Full Name</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Full Name
+              </label>
               <input
                 type="text"
                 value={formData.fullName}
@@ -293,7 +320,9 @@ const BeTrainerPage = () => {
             </div>
 
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Email</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Email
+              </label>
               <input
                 type="email"
                 value={formData.email}
@@ -302,13 +331,33 @@ const BeTrainerPage = () => {
               />
             </div>
 
+
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Available Days</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Age
+              </label>
+              <input
+                type="number"
+                value={formData.age}
+                onChange={handleAgeChange}
+                min="1"
+                max="90"
+                placeholder="Enter your age (1-90)"
+                className="w-full px-5 py-4 bg-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-700 text-lg"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Available Days
+              </label>
               <Select
                 isMulti
                 options={daysOptions}
                 value={formData.availableDays}
-                onChange={(value) => setFormData({ ...formData, availableDays: value })}
+                onChange={(value) =>
+                  setFormData({ ...formData, availableDays: value })
+                }
                 placeholder="Select days you are available"
                 classNamePrefix="react-select"
                 required
@@ -316,7 +365,9 @@ const BeTrainerPage = () => {
             </div>
 
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Social Links (Choose up to 2)</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Social Links (Choose up to 2)
+              </label>
               {[0, 1].map((idx) => (
                 <div key={idx} className="mb-6 space-y-3">
                   <Select
@@ -350,12 +401,19 @@ const BeTrainerPage = () => {
 
           {/* Right Column */}
           <div className="space-y-8 bg-zinc-800 p-8 rounded-xl shadow-inner border border-zinc-700">
-            <h2 className="text-3xl font-semibold text-white mb-6">Professional Details</h2>
+            <h2 className="text-3xl font-semibold text-white mb-6">
+              Professional Details
+            </h2>
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Skills</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Skills
+              </label>
               <div className="flex flex-wrap gap-5 p-4 bg-zinc-700 rounded-lg border border-zinc-600">
                 {skillsList.map((skill) => (
-                  <label key={skill} className="flex items-center gap-3 text-lg text-white cursor-pointer">
+                  <label
+                    key={skill}
+                    className="flex items-center gap-3 text-lg text-white cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={formData.skills.includes(skill)}
@@ -369,15 +427,21 @@ const BeTrainerPage = () => {
             </div>
 
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Available Time Range</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Available Time Range
+              </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col">
-                  <label className="text-base mb-2 font-medium text-zinc-400">From</label>
+                  <label className="text-base mb-2 font-medium text-zinc-400">
+                    From
+                  </label>
                   <div className="flex gap-3">
                     <Select
                       options={hourOptions}
                       value={formData.fromHour}
-                      onChange={(value) => setFormData({ ...formData, fromHour: value })}
+                      onChange={(value) =>
+                        setFormData({ ...formData, fromHour: value })
+                      }
                       placeholder="Hour"
                       classNamePrefix="react-select"
                       required
@@ -385,7 +449,9 @@ const BeTrainerPage = () => {
                     <Select
                       options={ampmOptions}
                       value={formData.fromAMPM}
-                      onChange={(value) => setFormData({ ...formData, fromAMPM: value })}
+                      onChange={(value) =>
+                        setFormData({ ...formData, fromAMPM: value })
+                      }
                       placeholder="AM/PM"
                       classNamePrefix="react-select"
                       required
@@ -394,12 +460,16 @@ const BeTrainerPage = () => {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-base mb-2 font-medium text-zinc-400">To</label>
+                  <label className="text-base mb-2 font-medium text-zinc-400">
+                    To
+                  </label>
                   <div className="flex gap-3">
                     <Select
                       options={hourOptions}
                       value={formData.toHour}
-                      onChange={(value) => setFormData({ ...formData, toHour: value })}
+                      onChange={(value) =>
+                        setFormData({ ...formData, toHour: value })
+                      }
                       placeholder="Hour"
                       classNamePrefix="react-select"
                       required
@@ -407,7 +477,9 @@ const BeTrainerPage = () => {
                     <Select
                       options={ampmOptions}
                       value={formData.toAMPM}
-                      onChange={(value) => setFormData({ ...formData, toAMPM: value })}
+                      onChange={(value) =>
+                        setFormData({ ...formData, toAMPM: value })
+                      }
                       placeholder="AM/PM"
                       classNamePrefix="react-select"
                       required
@@ -418,7 +490,9 @@ const BeTrainerPage = () => {
             </div>
 
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Years of Experience</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Years of Experience
+              </label>
               <Select
                 options={experienceOptions}
                 value={formData.yearsOfExperience}
@@ -432,7 +506,9 @@ const BeTrainerPage = () => {
             </div>
 
             <div>
-              <label className="block mb-3 font-semibold text-lg text-zinc-300">Trainer Bio</label>
+              <label className="block mb-3 font-semibold text-lg text-zinc-300">
+                Trainer Bio
+              </label>
               <textarea
                 value={formData.additionalInfo}
                 onChange={(e) =>

@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import { FaHome, FaTasks, FaPlusSquare, FaComments, FaBars, FaTimes } from 'react-icons/fa';
 
 const TrainerDashboard = () => {
+    useEffect(() => {
+            document.title = "Trainer Dashboard"; 
+        }, []);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {

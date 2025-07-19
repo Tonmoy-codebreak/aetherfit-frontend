@@ -114,7 +114,7 @@ const AllClassesPage = () => {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16 pt-20"> {/* Added pt-20 for header clearance */}
+        <div className="min-h-screen  pb-32 bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16 pt-20"> {/* Added pt-20 for header clearance */}
             <h1 className="text-5xl pt-20 md:text-5xl font-bold mb-12 text-center text-white font-funnel drop-shadow-lg">
                 Explore Our Classes
             </h1>
@@ -225,7 +225,7 @@ const AllClassesPage = () => {
 
                     {/* Pagination Controls */}
                     {data.totalPages > 1 && (
-                        <div className="flex justify-center mt-16 space-x-3 flex-wrap">
+                        <div className="flex justify-center pt-20 md:pb-32 mt-16 space-x-3 flex-wrap">
                             <button
                                 onClick={() => goToPage(page - 1)}
                                 disabled={page === 1}

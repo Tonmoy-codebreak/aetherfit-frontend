@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router"; 
 import {
     FaHome, FaUsers, FaUserTie, FaUserCheck,
@@ -7,6 +7,9 @@ import {
 } from 'react-icons/fa';
 
 const AdminDashboard = () => {
+      useEffect(() => {
+            document.title = "Admin Dashboard"; 
+        }, []);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);

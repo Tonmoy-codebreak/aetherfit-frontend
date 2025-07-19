@@ -277,7 +277,7 @@ const TrainerDetailsPage = () => {
                                 No available slots at the moment. Please check back later!
                             </p>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700 shadow-inner">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700 shadow-inner">
                                 {slots
                                     .filter(slot => slot && slot.day && slot.timeRange)
                                     .map((slot, idx) => {

@@ -162,7 +162,7 @@ const TrainerBookingPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-[#faba22] font-sans p-4 sm:p-6 md:p-10 pt-24">
-      <div className="max-w-6xl mx-auto rounded-2xl shadow-2xl border border-zinc-800 p-4 sm:p-8 md:p-12">
+      <div className="max-w-6xl mx-auto rounded-2xl shadow-2xl p-4 sm:p-8 md:p-12">
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-8 text-center text-white font-funnel drop-shadow-lg leading-tight">
           Booking with <span className="text-[#faba22]">{trainer.name}</span>
@@ -188,10 +188,10 @@ const TrainerBookingPage = () => {
                   <span className="font-bold text-[#faba22]">Difficulty: </span>
                   <span className="text-white">{classInfo.difficulty}</span>
                 </p>
-                <p className="text-zinc-300 text-base sm:text-lg md:text-xl">
+                {/* <p className="text-zinc-300 text-base sm:text-lg md:text-xl">
                   <span className="font-bold text-[#faba22]">Duration: </span>
                   <span className="text-white">{classInfo.durationMinutes} minutes</span>
-                </p>
+                </p> */}
               </>
             )}
           </div>

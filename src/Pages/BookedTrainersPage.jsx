@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../AuthProvider/useAuth";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import StarRatings from "react-star-ratings";
 import {
   FaCalendarAlt,
   FaDumbbell,
   FaDollarSign,
-  FaUserCircle,
-  FaEnvelope,
   FaStar,
 } from "react-icons/fa";
 import useAxios from "../hooks/useAxios";
@@ -36,15 +34,12 @@ const fetchTrainerById = async (trainerId, axiosSecure) => {
 const BookedTrainersPage = () => {
   const { user } = useAuth();
   const axiosSecure = useAxios();
+  const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTrainerEmail, setCurrentTrainerEmail] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(null);
-  const [reviewedTrainers, setReviewedTrainers] = useState(new Set());
 
   const {
     data: userReviews = [],
@@ -55,13 +50,6 @@ const BookedTrainersPage = () => {
     queryFn: () => fetchUserReviews(user.email, axiosSecure),
     enabled: !!user?.email,
   });
-
-  useEffect(() => {
-    if (userReviews && userReviews.length > 0) {
-      const reviewedEmails = new Set(userReviews.map((r) => r.trainerEmail));
-      setReviewedTrainers(reviewedEmails);
-    }
-  }, [userReviews]);
 
   const {
     data: bookings = [],
@@ -78,8 +66,29 @@ const BookedTrainersPage = () => {
       queryKey: ["trainer", booking.trainerId],
       queryFn: () => fetchTrainerById(booking.trainerId, axiosSecure),
       enabled: !!booking.trainerId,
+      staleTime: 1000 * 60 * 5, // Cache trainer data for 5 minutes
     })),
   });
+
+  const {
+    mutate: submitReview,
+    isLoading: submitLoading,
+    isError: submitError,
+    isSuccess: submitSuccess,
+    error: mutationError,
+  } = useMutation({
+    mutationFn: async (reviewData) => {
+      await axiosSecure.post(`${API_URL}/trainer-reviews`, reviewData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["userReviews", user?.email]);
+      setTimeout(() => {
+        setIsModalOpen(false);
+      }, 1500);
+    },
+  });
+
+  const reviewedTrainers = new Set(userReviews.map((r) => r.trainerEmail));
 
   if (!user) {
     return (
@@ -126,8 +135,6 @@ const BookedTrainersPage = () => {
     setCurrentTrainerEmail(trainerEmail);
     setFeedbackText("");
     setRatingValue(0);
-    setSubmitError(null);
-    setSubmitSuccess(null);
     setIsModalOpen(true);
   };
 
@@ -135,35 +142,19 @@ const BookedTrainersPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleSubmitReview = async () => {
+  const handleReviewSubmission = () => {
     if (ratingValue === 0) {
-      setSubmitError("Please select a rating.");
+      // Set local error state for UI display (optional if mutation handles errors globally)
       return;
     }
-    setSubmitLoading(true);
-    setSubmitError(null);
-    setSubmitSuccess(null);
 
-    try {
-      await axiosSecure.post(`${API_URL}/trainer-reviews`, {
-        trainerEmail: currentTrainerEmail,
-        reviewerEmail: user.email,
-        reviewerName: user.displayName || "Anonymous",
-        rating: ratingValue,
-        feedback: feedbackText,
-      });
-
-      setSubmitSuccess("Review submitted successfully!");
-      setReviewedTrainers((prev) => new Set(prev).add(currentTrainerEmail));
-
-      setTimeout(() => {
-        setIsModalOpen(false);
-      }, 1500);
-    } catch {
-      setSubmitError("Failed to submit review. Try again later.");
-    } finally {
-      setSubmitLoading(false);
-    }
+    submitReview({
+      trainerEmail: currentTrainerEmail,
+      reviewerEmail: user.email,
+      reviewerName: user.displayName || "Anonymous",
+      rating: ratingValue,
+      feedback: feedbackText,
+    });
   };
 
   return (
@@ -348,17 +339,17 @@ const BookedTrainersPage = () => {
 
               {submitError && (
                 <p className="text-red-500 text-center mt-3 text-sm">
-                  {submitError}
+                  {mutationError?.message || "Failed to submit review. Try again later."}
                 </p>
               )}
               {submitSuccess && (
                 <p className="text-green-500 text-center mt-3 text-sm">
-                  {submitSuccess}
+                  Review submitted successfully!
                 </p>
               )}
 
               <button
-                onClick={handleSubmitReview}
+                onClick={handleReviewSubmission}
                 disabled={submitLoading}
                 className="w-full py-3 rounded-lg bg-[#faba22] text-black font-bold text-lg hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >

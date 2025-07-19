@@ -1,17 +1,15 @@
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react"; 
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"; 
 import { useAuth } from "../../AuthProvider/useAuth";
 import useAxios from "../../hooks/useAxios";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
 const AddForumTrainer = () => {
     const { user: authUser } = useAuth();
     const axiosSecure = useAxios();
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // Get query client for invalidation
 
-    const [mongoUser, setMongoUser] = useState(null);
     const [newForum, setNewForum] = useState({
         title: "",
         content: "",
@@ -21,35 +19,81 @@ const AddForumTrainer = () => {
     const [photoFile, setPhotoFile] = useState(null);
     const [previewURL, setPreviewURL] = useState("");
     const [imageSize, setImageSize] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-    useEffect(() => {
-        const fetchMongoUser = async () => {
+    // TanStack Query for fetching user data
+    const { data: mongoUser, isLoading: isLoadingUser, isError: isUserError } = useQuery({
+        queryKey: ["currentUser", authUser?.email], // Query key with email dependency
+        queryFn: async () => {
             if (!authUser?.email) {
-                setIsLoadingUser(false);
-                return;
+                return null; // Don't fetch if email is not available
             }
-            try {
-                const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${authUser.email}`);
-                setMongoUser(res.data);
-            } catch (err) {
-                console.error("Error fetching MongoDB user data:", err);
-                Swal.fire({
-                    title: "Error",
-                    text: "Failed to load your user profile. Please try refreshing.",
-                    icon: "error",
-                    background: "black",
-                    color: "#faba22",
-                    confirmButtonColor: "#faba22",
-                });
-            } finally {
-                setIsLoadingUser(false);
-            }
-        };
+            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${authUser.email}`);
+            return res.data;
+        },
+        enabled: !!authUser?.email, // Only run the query if authUser.email exists
+        staleTime: Infinity, // User data typically doesn't change often
+        cacheTime: 1000 * 60 * 5, // Keep cached for 5 minutes
+        onError: (err) => {
+            console.error("Error fetching MongoDB user data:", err);
+            Swal.fire({
+                title: "Error",
+                text: "Failed to load your user profile. Please try refreshing.",
+                icon: "error",
+                background: "black",
+                color: "#faba22",
+                confirmButtonColor: "#faba22",
+            });
+        },
+    });
 
-        fetchMongoUser();
-    }, [authUser]);
+    // TanStack Query for adding a new forum post
+    const { mutate: addForumMutation, isLoading: isSubmitting } = useMutation({
+        mutationFn: async (forumData) => {
+            // First, upload the image if a photoFile exists
+            let finalImageURL = forumData.image;
+            if (photoFile) {
+                const base64Image = await toBase64(photoFile);
+                const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
+                    imageBase64: base64Image,
+                });
+                finalImageURL = uploadRes.data.url;
+            }
+
+            // Then, post the forum data
+            return axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
+                ...forumData,
+                image: finalImageURL,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["forums"]); // Invalidate forums query to refetch list if needed
+            setNewForum({ title: "", content: "", image: "" });
+            setPhotoFile(null);
+            setPreviewURL("");
+            setImageSize(null);
+            Swal.fire({
+                title: "Forum Added!",
+                text: "Your forum post has been submitted.",
+                icon: "success",
+                background: "black",
+                color: "#faba22",
+                confirmButtonColor: "#faba22",
+            });
+            // Optional: navigate after success
+            // navigate('/dashboard/trainer/my-forums');
+        },
+        onError: (err) => {
+            console.error("Forum add error:", err);
+            Swal.fire({
+                title: "Error",
+                text: err.response?.data?.message || err.message || "Something went wrong.",
+                icon: "error",
+                background: "black",
+                color: "#faba22",
+                confirmButtonColor: "#faba22",
+            });
+        },
+    });
 
     const handleInputChange = (e) => {
         setNewForum({ ...newForum, [e.target.name]: e.target.value });
@@ -95,7 +139,6 @@ const AddForumTrainer = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
 
         if (!mongoUser?._id || !mongoUser?.email) {
             Swal.fire({
@@ -106,7 +149,6 @@ const AddForumTrainer = () => {
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
-            setIsSubmitting(false);
             return;
         }
 
@@ -119,60 +161,22 @@ const AddForumTrainer = () => {
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
-            setIsSubmitting(false);
             return;
         }
 
-        try {
-            let finalImageURL = newForum.image;
+        const authorId = mongoUser._id;
+        const authorName = authUser?.displayName || mongoUser.name || mongoUser.email;
+        const authorRole = "Trainer"; // Assuming the user is always a Trainer here
+        const authorEmail = mongoUser.email;
 
-            const base64Image = await toBase64(photoFile);
-            const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
-                imageBase64: base64Image,
-            });
-            finalImageURL = uploadRes.data.url || finalImageURL;
-
-            const authorId = mongoUser._id;
-            const authorName = authUser?.displayName || mongoUser.name || mongoUser.email;
-            const authorRole = "Trainer";
-            const authorEmail = mongoUser.email;
-
-            await axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
-                ...newForum,
-                image: finalImageURL,
-                authorId,
-                authorName,
-                authorRole,
-                authorEmail,
-            });
-
-            setNewForum({ title: "", content: "", image: "" });
-            setPhotoFile(null);
-            setPreviewURL("");
-            setImageSize(null);
-
-            Swal.fire({
-                title: "Forum Added!",
-                text: "Your forum post has been submitted.",
-                icon: "success",
-                background: "black",
-                color: "#faba22",
-                confirmButtonColor: "#faba22",
-            });
-
-        } catch (err) {
-            console.error("Forum add error:", err);
-            Swal.fire({
-                title: "Error",
-                text: err.response?.data?.message || err.message || "Something went wrong.",
-                icon: "error",
-                background: "black",
-                color: "#faba22",
-                confirmButtonColor: "#faba22",
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        // Call the mutation function
+        addForumMutation({
+            ...newForum,
+            authorId,
+            authorName,
+            authorRole,
+            authorEmail,
+        });
     };
 
     if (isLoadingUser) {
@@ -184,7 +188,7 @@ const AddForumTrainer = () => {
         );
     }
 
-    if (!mongoUser || !mongoUser._id) {
+    if (isUserError || !mongoUser || !mongoUser._id) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
                 <p className="text-red-500 text-lg sm:text-xl font-inter text-center mx-4">User profile not found or loaded. Please ensure you are logged in correctly.</p>

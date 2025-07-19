@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { useState } from 'react'; // Removed useEffect
 import Select from 'react-select';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../AuthProvider/useAuth';
 import useAxios from '../../hooks/useAxios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 
 // Options for dropdowns (unchanged logic)
 const hourOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: i + 1 }));
@@ -31,10 +31,10 @@ const socialPlatforms = [
 ];
 
 const AddSlot = () => {
-    const axiosSecure = useAxios()
+    const axiosSecure = useAxios();
     const { user } = useAuth();
-    const [trainerData, setTrainerData] = useState(null);
-    const [classes, setClasses] = useState([]);
+    const queryClient = useQueryClient(); // Get query client for invalidation
+
     const [formData, setFormData] = useState({
         slotName: '',
         selectedDay: null,
@@ -68,7 +68,8 @@ const AddSlot = () => {
                 totalHours -= 12;
             }
             if (hour !== 12 && totalHours === 12) {
-             } else if (totalHours > 12) {
+                // This empty block can be removed
+            } else if (totalHours > 12) {
                 totalHours -= 12;
             }
         }
@@ -87,27 +88,67 @@ const AddSlot = () => {
     const timeRange = formData.startTimeHour?.value && endTime ?
         `${formData.startTimeHour.value} ${formData.startTimeAMPM.value} - ${endTime}` : '';
 
-    // Data fetching logic - MODIFIED
-    useEffect(() => {
-        const fetchTrainerDataAndClasses = async () => {
-            if (!user?.email) return;
-
-            try {
-                const trainerRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
-                setTrainerData(trainerRes.data);
-
-                // MODIFIED: Use the new /classes/all route to get all classes
-                const classesRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/classes/all`);
-                setClasses(classesRes.data); // The new route directly returns an array of classes
-
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                Swal.fire('Error', 'Failed to load trainer data or classes.', 'error');
+    // TanStack Query for fetching trainer data
+    const { data: trainerData, isLoading: isLoadingTrainer, isError: isTrainerError } = useQuery({
+        queryKey: ["trainerProfile", user?.email], // Unique key for trainer data
+        queryFn: async () => {
+            if (!user?.email) {
+                return null;
             }
-        };
+            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
+            return res.data;
+        },
+        enabled: !!user?.email, // Only fetch if user email is available
+        staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+        cacheTime: 1000 * 60 * 10, // Keep cached for 10 minutes
+        onError: (err) => {
+            console.error('Error fetching trainer data:', err);
+            Swal.fire('Error', 'Failed to load trainer data.', 'error');
+        },
+    });
 
-        fetchTrainerDataAndClasses();
-    }, [user, axiosSecure]);
+    // TanStack Query for fetching all classes
+    const { data: classes, isLoading: isLoadingClasses, isError: isClassesError } = useQuery({
+        queryKey: ["classes"], // Unique key for classes data
+        queryFn: async () => {
+            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/classes/all`);
+            return res.data;
+        },
+        staleTime: 1000 * 60 * 30, // Classes data might be relatively stable, 30 min fresh
+        cacheTime: 1000 * 60 * 60, // Keep cached for 1 hour
+        onError: (err) => {
+            console.error('Error fetching classes:', err);
+            Swal.fire('Error', 'Failed to load classes.', 'error');
+        },
+    });
+
+    // TanStack Query for adding a new slot (mutation)
+    const { mutate: addSlotMutation, isPending: isAddingSlot } = useMutation({
+        mutationFn: async (newSlotData) => {
+            return axiosSecure.patch(
+                `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerData._id}/add-slot`,
+                newSlotData
+            );
+        },
+        onSuccess: (response) => {
+            Swal.fire('Success', response.data?.message || 'Slot added successfully!', 'success');
+            setFormData({
+                slotName: '',
+                selectedDay: null,
+                slotDuration: 1,
+                startTimeHour: hourOptions[7],
+                startTimeAMPM: ampmOptions[0],
+                selectedClass: null,
+            });
+            // Invalidate the trainerProfile query to refetch updated trainerData (with new slot)
+            queryClient.invalidateQueries(["trainerProfile", user?.email]);
+            // You might also invalidate a 'slots' query if you had one showing all trainer's slots
+        },
+        onError: (err) => {
+            console.error('Error adding slot:', err);
+            Swal.fire('Error', err.response?.data?.error || 'Failed to add slot.', 'error');
+        },
+    });
 
     // Input change handlers (unchanged)
     const handleInputChange = (e) => {
@@ -119,7 +160,7 @@ const AddSlot = () => {
         setFormData((prev) => ({ ...prev, [name]: selectedOption }));
     };
 
-    // Form submission logic (unchanged)
+    // Form submission logic (now triggers the mutation)
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -148,55 +189,42 @@ const AddSlot = () => {
             classId: formData.selectedClass.value,
         };
 
-        try {
-            const response = await axiosSecure.patch(
-                `${import.meta.env.VITE_API_URL}/trainer-profiles/${trainerData._id}/add-slot`,
-                newSlot
-            );
-
-            if (response.data?.message) {
-                Swal.fire('Success', response.data.message, 'success');
-                setFormData({
-                    slotName: '',
-                    selectedDay: null,
-                    slotDuration: 1,
-                    startTimeHour: hourOptions[7],
-                    startTimeAMPM: ampmOptions[0],
-                    selectedClass: null,
-                });
-                // Refetch trainerData to update the UI with the new slot
-                const trainerRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-profiles/by-email?email=${user.email}`);
-                setTrainerData(trainerRes.data);
-            }
-        } catch (err) {
-            console.error('Error adding slot:', err);
-            Swal.fire('Error', err.response?.data?.error || 'Failed to add slot.', 'error');
-        }
+        // Trigger the mutation
+        addSlotMutation(newSlot);
     };
 
     // Helper for social platforms (unchanged - though not used in this component, keeping it as per original)
     const getAvailableSocialPlatforms = (currentIndex) => {
-        // This function is not used in this component's current state, but kept to match original structure.
-        // It would typically be used if social links were part of the form.
         return socialPlatforms.map((platform) => ({
             ...platform,
-            isDisabled: false, // Assuming no socialLinks in formData for this component
+            isDisabled: false,
         }));
     };
 
-    // Loading state UI (enhanced)
-    if (!trainerData) {
+    // Loading state UI (enhanced with TanStack Query states)
+    if (isLoadingTrainer || isLoadingClasses) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-zinc-950">
                 <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
-                <p className="text-[#faba22] ml-4 text-xl font-semibold font-inter">Loading trainer data...</p>
+                <p className="text-[#faba22] ml-4 text-xl font-semibold font-inter">Loading data...</p>
+            </div>
+        );
+    }
+
+    // Error state UI
+    if (isTrainerError || isClassesError || !trainerData) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+                <p className="text-red-500 text-xl font-semibold font-inter text-center mx-4">
+                    Failed to load required data. Please try again later.
+                </p>
             </div>
         );
     }
 
     // Derived data for display (unchanged logic)
     const availableDaysOptions = trainerData.availableDays?.map(day => ({ value: day, label: day })) || [];
-    const classOptions = classes.map(cls => ({ value: cls._id, label: cls.name }));
+    const classOptions = classes?.map(cls => ({ value: cls._id, label: cls.name })) || []; // Ensure classes is defined before mapping
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white font-inter p-4 sm:p-6 lg:p-8">
@@ -269,9 +297,9 @@ const AddSlot = () => {
                 </h1>
 
                 {/* Trainer Information Section */}
-                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700 mb-10"> {/* Adjusted padding */}
-                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Trainer Information</h2> {/* Adjusted font size */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-base sm:text-lg"> {/* Responsive grid and font size */}
+                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700 mb-10">
+                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Trainer Information</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-base sm:text-lg">
                         <div>
                             <label className="block text-zinc-300 font-medium mb-1">Email</label>
                             <input type="text" value={trainerData.email || 'N/A'} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
@@ -280,11 +308,11 @@ const AddSlot = () => {
                             <label className="block text-zinc-300 font-medium mb-1">Years of Experience</label>
                             <input type="text" value={`${trainerData.yearsOfExperience || '0'} years`} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
                         </div>
-                        <div className="sm:col-span-2"> {/* Span full width on small screens too */}
+                        <div className="sm:col-span-2">
                             <label className="block text-zinc-300 font-medium mb-1">Skills</label>
                             <input type="text" value={trainerData.skills?.join(', ') || 'N/A'} readOnly className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600" />
                         </div>
-                        <div className="sm:col-span-2"> {/* Always visible, spans full width */}
+                        <div className="sm:col-span-2">
                             <label className="block text-white font-medium mb-1">Bio</label>
                             <textarea value={trainerData.bio || 'No bio available.'} readOnly rows="3" className="w-full px-4 py-3 bg-zinc-700 rounded-lg text-white opacity-100 cursor-not-allowed resize-none border border-zinc-600"></textarea>
                         </div>
@@ -292,11 +320,11 @@ const AddSlot = () => {
                 </div>
 
                 {/* Add New Slot Form Section */}
-                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700"> {/* Adjusted padding */}
-                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Add New Slot Form</h2> {/* Adjusted font size */}
-                    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8"> {/* Responsive vertical spacing */}
+                <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
+                    <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-white">Add New Slot Form</h2>
+                    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                         <div>
-                            <label htmlFor="slotName" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Name</label> {/* Responsive font size */}
+                            <label htmlFor="slotName" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Name</label>
                             <input
                                 type="text"
                                 id="slotName"
@@ -304,13 +332,13 @@ const AddSlot = () => {
                                 value={formData.slotName}
                                 onChange={handleInputChange}
                                 placeholder="e.g., Morning Strength Slot"
-                                className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg" /* Responsive padding and font size */
+                                className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="selectedDay" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Select Day</label> {/* Responsive font size */}
+                            <label htmlFor="selectedDay" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Select Day</label>
                             <Select
                                 id="selectedDay"
                                 name="selectedDay"
@@ -320,13 +348,12 @@ const AddSlot = () => {
                                 placeholder="Select an available day"
                                 classNamePrefix="react-select"
                                 required
-                                // Custom styles are already defined in <style> tag to be responsive
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="slotDuration" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Duration</label> {/* Responsive font size */}
-                            <div className="flex items-center gap-3 sm:gap-4"> {/* Responsive gap */}
+                            <label htmlFor="slotDuration" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Slot Duration</label>
+                            <div className="flex items-center gap-3 sm:gap-4">
                                 <input
                                     type="number"
                                     id="slotDuration"
@@ -335,17 +362,17 @@ const AddSlot = () => {
                                     onChange={handleInputChange}
                                     min="1"
                                     placeholder="e.g., 1"
-                                    className="w-24 sm:w-28 px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg" /* Responsive width, padding and font size */
+                                    className="w-24 sm:w-28 px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-600 text-base sm:text-lg"
                                     required
                                 />
-                                <span className="text-base sm:text-xl font-medium text-zinc-300">hour(s)</span> {/* Responsive font size */}
+                                <span className="text-base sm:text-xl font-medium text-zinc-300">hour(s)</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8"> {/* Responsive grid and gap */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                             <div>
-                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Start Time</label> {/* Responsive font size */}
-                                <div className="flex flex-col md:flex  gap-3 md:gap-4">
+                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Start Time</label>
+                                <div className="flex flex-col md:flex gap-3 md:gap-4">
                                     <Select
                                         options={hourOptions}
                                         value={formData.startTimeHour}
@@ -365,18 +392,18 @@ const AddSlot = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">End Time (Auto-calculated)</label> {/* Responsive font size */}
+                                <label className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">End Time (Auto-calculated)</label>
                                 <input
                                     type="text"
                                     value={timeRange || 'Select start time and duration'}
                                     readOnly
-                                    className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600 text-base sm:text-lg" /* Responsive padding and font size */
+                                    className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-zinc-700 rounded-lg text-white opacity-80 cursor-not-allowed border border-zinc-600 text-base sm:text-lg"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="selectedClass" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Class to include</label> {/* Responsive font size */}
+                            <label htmlFor="selectedClass" className="block text-base sm:text-lg font-medium mb-2 text-zinc-300">Class to include</label>
                             <Select
                                 id="selectedClass"
                                 name="selectedClass"
@@ -391,11 +418,22 @@ const AddSlot = () => {
 
                         <button
                             type="submit"
+                            disabled={isAddingSlot} // Disable button when mutation is pending
                             className="w-full py-3 sm:py-4 rounded-xl bg-[#faba22] text-black font-bold text-lg sm:text-xl
-                                       hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl
-                                       transform hover:-translate-y-1" /* Responsive padding and font size */
+                                    hover:bg-yellow-500 transition-all duration-300 shadow-lg hover:shadow-xl
+                                    transform hover:-translate-y-1"
                         >
-                            Add Slot
+                            {isAddingSlot ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Adding Slot...
+                                </div>
+                            ) : (
+                                'Add Slot'
+                            )}
                         </button>
                     </form>
                 </div>

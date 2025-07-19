@@ -4,16 +4,25 @@ import { IoEye } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import { FaPlus, FaTrashAlt, FaTimes } from "react-icons/fa";
 import useAxios from "../../hooks/useAxios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = (error) => reject(error);
+  });
 
 const AddForumAdmin = () => {
   const axiosSecure = useAxios();
-  const [forums, setForums] = useState([]);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newForum, setNewForum] = useState({ title: "", image: "" });
+  const [newForum, setNewForum] = useState({ title: "", content: "", image: "" });
   const [photoFile, setPhotoFile] = useState(null);
   const [previewURL, setPreviewURL] = useState("");
-  const [imageSize, setImageSize] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageSize, setImageSize] = useState(0); // Size in bytes
+  const [imageSizeError, setImageSizeError] = useState(""); // New state for image size error
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -23,15 +32,14 @@ const AddForumAdmin = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    fetchForums();
-  }, []);
-
-  const fetchForums = async () => {
-    try {
+  const { data: forums = [], isLoading, error } = useQuery({
+    queryKey: ["adminForums"],
+    queryFn: async () => {
       const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/admin/forums`);
-      setForums(res.data);
-    } catch (err) {
+      if (!Array.isArray(res.data)) throw new Error("Invalid data format received");
+      return res.data;
+    },
+    onError: (err) => {
       Swal.fire({
         title: '<span style="color:#faba22">Error</span>',
         text: err.response?.data?.message || "Failed to load forums.",
@@ -40,48 +48,16 @@ const AddForumAdmin = () => {
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
-    }
-  };
+    },
+  });
 
-  const handleInputChange = (e) => {
-    setNewForum({ ...newForum, [e.target.name]: e.target.value });
-  };
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    setPhotoFile(file);
-    setPreviewURL(file ? URL.createObjectURL(file) : "");
-    setImageSize(file ? file.size : 0);
-  };
-
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = (error) => reject(error);
-    });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      let finalImageURL = newForum.image;
+  const addForumMutation = useMutation({
+    mutationFn: async (forumData) => {
+      let finalImageURL = forumData.image;
       if (photoFile) {
         if (imageSize > 2 * 1024 * 1024) {
-          Swal.fire({
-            icon: "error",
-            title: '<span style="color:#faba22">Image Too Large!</span>',
-            text: "Image size cannot be more than 2MB.",
-            background: "black",
-            color: "#faba22",
-            confirmButtonColor: "#faba22",
-          });
-          setIsSubmitting(false);
-          return;
+          throw new Error("Image size cannot be more than 2MB.");
         }
-
         const base64Image = await toBase64(photoFile);
         const uploadRes = await axiosSecure.post(
           `${import.meta.env.VITE_API_URL}/upload-image`,
@@ -94,7 +70,8 @@ const AddForumAdmin = () => {
       await axiosSecure.post(
         `${import.meta.env.VITE_API_URL}/admin/forums`,
         {
-          title: newForum.title,
+          title: forumData.title,
+          content: forumData.content,
           image: finalImageURL,
           authorId: "admin123",
           authorName: "Admin User",
@@ -102,14 +79,15 @@ const AddForumAdmin = () => {
         },
         { timeout: 30000 }
       );
-
-      setNewForum({ title: "", image: "" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["adminForums"]);
+      setNewForum({ title: "", content: "", image: "" });
       setPhotoFile(null);
       setPreviewURL("");
       setImageSize(0);
+      setImageSizeError(""); // Clear error on success
       setIsModalOpen(false);
-      fetchForums();
-
       Swal.fire({
         title: '<span style="color:#faba22">Forum Added!</span>',
         text: "Your forum post has been submitted.",
@@ -118,18 +96,80 @@ const AddForumAdmin = () => {
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
-    } catch (err) {
+    },
+    onError: (err) => {
       Swal.fire({
         title: '<span style="color:#faba22">Error</span>',
-        text: err.response?.data?.message || err.message || "Something went wrong.",
+        text: err.message || err.response?.data?.message || "Something went wrong.",
         icon: "error",
         background: "black",
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const deleteForumMutation = useMutation({
+    mutationFn: async (id) => {
+      await axiosSecure.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["adminForums"]);
+      Swal.fire({
+        title: '<span style="color:#faba22">Deleted!</span>',
+        text: "Forum has been deleted.",
+        icon: "success",
+        background: "black",
+        color: "#faba22",
+        confirmButtonColor: "#faba22",
+      });
+    },
+    onError: (error) => {
+      Swal.fire({
+        title: '<span style="color:#faba22">Error</span>',
+        text: error.response?.data?.message || error.message || "Failed to delete forum.",
+        icon: "error",
+        background: "black",
+        color: "#faba22",
+        confirmButtonColor: "#faba22",
+      });
+    },
+  });
+
+  const handleInputChange = (e) => {
+    setNewForum({ ...newForum, [e.target.name]: e.target.value });
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    setPhotoFile(file);
+    setPreviewURL(file ? URL.createObjectURL(file) : "");
+    const size = file ? file.size : 0;
+    setImageSize(size);
+
+    // Check size and set error message
+    if (size > 2 * 1024 * 1024) {
+      setImageSizeError("Image size cannot be more than 2MB.");
+    } else {
+      setImageSizeError("");
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Prevent submission if there's an image size error
+    if (imageSizeError) {
+      Swal.fire({
+        title: '<span style="color:#faba22">Image Error</span>',
+        text: imageSizeError,
+        icon: "error",
+        background: "black",
+        color: "#faba22",
+        confirmButtonColor: "#faba22",
+      });
+      return;
+    }
+    addForumMutation.mutate(newForum);
   };
 
   const handleDelete = async (id) => {
@@ -146,29 +186,21 @@ const AddForumAdmin = () => {
     });
 
     if (result.isConfirmed) {
-      try {
-        await axiosSecure.delete(`${import.meta.env.VITE_API_URL}/admin/forums/${id}`);
-        fetchForums();
-        Swal.fire({
-          title: '<span style="color:#faba22">Deleted!</span>',
-          text: "Forum has been deleted.",
-          icon: "success",
-          background: "black",
-          color: "#faba22",
-          confirmButtonColor: "#faba22",
-        });
-      } catch (error) {
-        Swal.fire({
-          title: '<span style="color:#faba22">Error</span>',
-          text: error.response?.data?.message || error.message || "Failed to delete forum.",
-          icon: "error",
-          background: "black",
-          color: "#faba22",
-          confirmButtonColor: "#faba22",
-        });
-      }
+      deleteForumMutation.mutate(id);
     }
   };
+
+  // Helper to format file size for display
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  if (isLoading) return <div className="flex justify-center items-center h-screen bg-zinc-950 text-[#faba22] font-semibold text-xl">Loading forums...</div>;
+  if (error) return null;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-inter p-4 sm:p-8 lg:p-16">
@@ -219,7 +251,7 @@ const AddForumAdmin = () => {
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-2">
-                      <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full">
+                      <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full" disabled={deleteForumMutation.isLoading}>
                         <FaTrashAlt size={12} />
                       </button>
                       <button onClick={() => navigate(`/forum/${forum._id}`)} className="p-2 bg-[#faba22] text-black rounded-full">
@@ -239,7 +271,7 @@ const AddForumAdmin = () => {
               <div className="flex justify-between items-center">
                 <span className="font-bold">{forum.title}</span>
                 <div className="flex gap-2">
-                  <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full">
+                  <button onClick={() => handleDelete(forum._id)} className="p-2 bg-red-700 rounded-full" disabled={deleteForumMutation.isLoading}>
                     <FaTrashAlt size={12} />
                   </button>
                   <button onClick={() => navigate(`/forum/${forum._id}`)} className="p-2 bg-[#faba22] text-black rounded-full">
@@ -270,19 +302,67 @@ const AddForumAdmin = () => {
             </button>
             <h2 className="text-2xl font-bold text-center text-[#faba22] mb-4">Add New Forum Post</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                name="title"
-                value={newForum.title}
-                onChange={handleInputChange}
-                required
-                placeholder="Forum title"
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
-              />
-              {previewURL && <img src={previewURL} alt="Preview" className="w-full max-h-40 object-cover rounded-lg" />}
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="w-full" />
-              <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-[#faba22] text-black rounded-xl font-bold">
-                {isSubmitting ? "Submitting..." : "Post Forum"}
+              {/* Forum Title Section */}
+              <div>
+                <label htmlFor="forumTitle" className="block text-zinc-300 text-sm font-semibold mb-2">Forum Title</label>
+                <input
+                  type="text"
+                  id="forumTitle"
+                  name="title"
+                  value={newForum.title}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter a compelling title for your forum post"
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#faba22]"
+                />
+              </div>
+
+              {/* Content Section */}
+              <div>
+                <label htmlFor="forumContent" className="block text-zinc-300 text-sm font-semibold mb-2">Content</label>
+                <textarea
+                  id="forumContent"
+                  name="content"
+                  value={newForum.content}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Share your insights, questions, or discussions here..."
+                  rows="5"
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white resize-y placeholder-zinc-500 focus:outline-none focus:border-[#faba22]"
+                ></textarea>
+              </div>
+
+              {/* Upload Image Section */}
+              <div>
+                <label htmlFor="forumImage" className="block text-zinc-300 text-sm font-semibold mb-2">
+                  Upload Image <span className="text-zinc-500">(Max 2MB)</span>
+                </label>
+                {previewURL && <img src={previewURL} alt="Preview" className="w-full max-h-40 object-cover rounded-lg mb-2" />}
+                <input
+                  type="file"
+                  id="forumImage"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="w-full text-zinc-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#faba22] file:text-black hover:file:bg-yellow-500 file:cursor-pointer"
+                />
+                {photoFile && (
+                  <p className={`mt-2 text-xs ${imageSizeError ? 'text-red-500' : 'text-zinc-400'}`}>
+                    Image Size: {formatFileSize(imageSize)}
+                  </p>
+                )}
+                {imageSizeError && (
+                  <p className="mt-2 text-red-500 text-sm">{imageSizeError}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={addForumMutation.isLoading || !!imageSizeError} // Disable if there's an image size error
+                className={`w-full py-3 bg-[#faba22] text-black rounded-xl font-bold transition-colors duration-300 ${
+                  addForumMutation.isLoading || !!imageSizeError ? 'opacity-50 cursor-not-allowed' : 'hover:bg-yellow-500'
+                }`}
+              >
+                {addForumMutation.isLoading ? "Submitting..." : "Post Forum"}
               </button>
             </form>
           </div>

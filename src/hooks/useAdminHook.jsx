@@ -1,55 +1,48 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router'; 
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../AuthProvider/useAuth';
 import useAxios from './useAxios';
+import { useQuery } from '@tanstack/react-query';
 
 const useAdminHook = () => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const axiosSecure = useAxios();
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    const axiosSecure = useAxios();
 
-  const [isLoadingRole, setIsLoadingRole] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+    const {
+        data: isAdmin,
+        isLoading: isRoleChecking,
+        isError: isRoleError,
+    } = useQuery({
+        queryKey: ['adminRole', user?.email],
+        queryFn: async () => {
+            const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
+            return response.data;
+        },
+        enabled: !!user && !authLoading,
+        select: (dbUser) => dbUser?.role === 'admin',
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
+    });
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (authLoading) {
-        return;
-      }
+    useEffect(() => {
+        if (authLoading) return;
 
-      if (!user) {
-        setIsLoadingRole(false);
-        navigate('/unauthorizedaccess', { replace: true });
-        return;
-      }
-
-      try {
-        const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
-        const dbUser = response.data;
-
-        // *** KEY CHANGE HERE: Check for 'admin' role ***
-        if (dbUser && dbUser.role === 'admin') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-          navigate('/unauthorizedaccess', { replace: true });
+        if (!user) {
+            navigate('/unauthorizedaccess', { replace: true });
+            return;
         }
-      } catch (error) {
-        console.error("Failed to fetch admin role from backend:", error);
-        setIsAdmin(false);
-        if (error.response?.status !== 401 && error.response?.status !== 403) {
+
+        if (!isRoleChecking && (isRoleError || isAdmin === false)) {
             navigate('/unauthorizedaccess', { replace: true });
         }
-      } finally {
-        setIsLoadingRole(false);
-      }
+    }, [user, authLoading, isAdmin, isRoleChecking, isRoleError, navigate]);
+
+    return {
+        user,
+        loading: authLoading || isRoleChecking,
+        isAdmin,
     };
-
-    checkUserRole();
-  }, [user, authLoading, navigate, axiosSecure]);
-
-  // Return relevant states for Admin Dashboard
-  return { user, loading: authLoading || isLoadingRole, isAdmin };
 };
 
 export default useAdminHook;

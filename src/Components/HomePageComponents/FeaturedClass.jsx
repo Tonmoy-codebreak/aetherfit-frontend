@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react'; 
 import useAxios from '../../hooks/useAxios';
+import { useQuery } from '@tanstack/react-query'; 
 
-// Modal Component
+
 const ClassDetailsModal = ({ classItem, onClose }) => {
-    if (!classItem) return null; // Don't render if no class item is provided
+    if (!classItem) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 font-sans">
@@ -62,28 +63,24 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
 
 
 const FeaturedClass = () => {
-    const [featuredClasses, setFeaturedClasses] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    // Keep useState only for the modal's selected class
     const [selectedClass, setSelectedClass] = useState(null);
     const axiosSecure = useAxios();
 
-    useEffect(() => {
-        const fetchFeaturedClasses = async () => {
-            try {
-                setLoading(true);
-                const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/featured-classes`);
-                setFeaturedClasses(response.data);
-            } catch (err) {
-                console.error("Error fetching featured classes:", err);
-                setError("Failed to load featured classes. Please try again later.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchFeaturedClasses();
-    }, []);
+    // 📌 TanStack Query Implementation
+    const { 
+        data: featuredClasses, 
+        isLoading,           
+        isError,           
+        error               
+    } = useQuery({
+        queryKey: ['featuredClasses'], // A unique key for this query
+        queryFn: async () => {      
+            const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/featured-classes`);
+            return response.data; 
+        },
+        refetchOnWindowFocus: false, 
+    });
 
     const openModal = (classItem) => {
         setSelectedClass(classItem);
@@ -93,7 +90,8 @@ const FeaturedClass = () => {
         setSelectedClass(null);
     };
 
-    if (loading) {
+    // Use isLoading from TanStack Query for loading state
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 font-sans">
                 <p className="text-white text-xl">Loading featured classes...</p>
@@ -101,15 +99,17 @@ const FeaturedClass = () => {
         );
     }
 
-    if (error) {
+    // Use isError and error from TanStack Query for error state
+    if (isError) {
         return (
             <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 font-sans">
-                <p className="text-red-400 text-xl">{error}</p>
+                <p className="text-red-400 text-xl">Failed to load featured classes: {error.message || "An unknown error occurred."}</p>
             </div>
         );
     }
 
-    if (featuredClasses.length === 0) {
+    // Check if data (featuredClasses) is available and not empty after loading
+    if (!featuredClasses || featuredClasses.length === 0) {
         return (
             <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 font-sans">
                 <p className="text-zinc-400 text-xl">No featured classes available at the moment.</p>
@@ -125,6 +125,7 @@ const FeaturedClass = () => {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Map over featuredClasses provided by TanStack Query */}
                     {featuredClasses.map((classItem) => (
                         <div
                             key={classItem._id}

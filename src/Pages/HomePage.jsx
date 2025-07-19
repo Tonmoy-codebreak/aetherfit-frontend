@@ -13,7 +13,7 @@ const HomePage = () => {
             document.title = "AetherFit"; 
         }, []);
     return (
-        <div className=' '>
+        <div >
          
             <BannerSection></BannerSection>
             <FeatureSection></FeatureSection>

@@ -1,62 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../AuthProvider/useAuth';
 import useAxios from './useAxios';
-
+import { useQuery } from '@tanstack/react-query';
 
 const useUserHook = () => {
-  const { user, loading: authLoading } = useAuth()
-  const navigate = useNavigate();
-  const axiosSecure = useAxios()
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    const axiosSecure = useAxios();
 
-  const [isLoadingRole, setIsLoadingRole] = useState(true);
-  const [isMember, setIsMember] = useState(false);
+    const {
+        data: isMember,
+        isLoading: isRoleChecking,
+        isError: isRoleError,
+    } = useQuery({
+        queryKey: ['userRole', user?.email],
+        queryFn: async () => {
+            const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
+            return response.data;
+        },
+        enabled: !!user && !authLoading,
+        select: (dbUser) => dbUser?.role === 'member',
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
+    });
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-    
-      if (authLoading) {
-        return; 
-      }
+    useEffect(() => {
+        if (authLoading) return;
 
-      if (!user) {
-        setIsLoadingRole(false);
-        navigate('/unauthorizedaccess', { replace: true });
-        return;
-      }
-
-      try {
-
-        const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
-
-        const dbUser = response.data; 
-
-  
-        if (dbUser && dbUser.role === 'member') {
-          setIsMember(true);
-        } else {
-       
-          setIsMember(false);
-          navigate('/unauthorizedaccess', { replace: true });
+        if (!user) {
+            navigate('/unauthorizedaccess', { replace: true });
+            return;
         }
-      } catch (error) {
- 
-        console.error("Failed to fetch user role from backend:", error);
-        setIsMember(false); 
 
-        if (error.response?.status !== 401 && error.response?.status !== 403) {
+        if (!isRoleChecking && (isRoleError || isMember === false)) {
             navigate('/unauthorizedaccess', { replace: true });
         }
-      } finally {
-        setIsLoadingRole(false); 
-      }
+    }, [user, authLoading, isMember, isRoleChecking, isRoleError, navigate]);
+
+    return {
+        user,
+        loading: authLoading || isRoleChecking,
+        isMember,
     };
-
-    checkUserRole();
-  }, [user, authLoading, navigate, axiosSecure]); 
-
- 
-  return { user, loading: authLoading || isLoadingRole, isMember };
 };
 
 export default useUserHook;

@@ -1,55 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../AuthProvider/useAuth';
 import useAxios from './useAxios';
+import { useQuery } from '@tanstack/react-query';
 
 const useTrainerHook = () => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const axiosSecure = useAxios();
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    const axiosSecure = useAxios();
 
-  const [isLoadingRole, setIsLoadingRole] = useState(true);
-  const [isTrainer, setIsTrainer] = useState(false); // State for trainer role
+    const {
+        data: isTrainer,
+        isLoading: isRoleChecking,
+        isError: isRoleError,
+    } = useQuery({
+        queryKey: ['trainerRole', user?.email],
+        queryFn: async () => {
+            const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
+            return response.data;
+        },
+        enabled: !!user && !authLoading,
+        select: (dbUser) => dbUser?.role === 'trainer',
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
+    });
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (authLoading) {
-        return;
-      }
+    useEffect(() => {
+        if (authLoading) return;
 
-      if (!user) {
-        setIsLoadingRole(false);
-        navigate('/unauthorizedaccess', { replace: true });
-        return;
-      }
-
-      try {
-        const response = await axiosSecure.get(`/normal_users/profile?email=${user.email}`);
-        const dbUser = response.data;
-
-      
-        if (dbUser && dbUser.role === 'trainer') {
-          setIsTrainer(true);
-        } else {
-          setIsTrainer(false);
-          navigate('/unauthorizedaccess', { replace: true });
+        if (!user) {
+            navigate('/unauthorizedaccess', { replace: true });
+            return;
         }
-      } catch (error) {
-        console.error("Failed to fetch trainer role from backend:", error);
-        setIsTrainer(false);
-        if (error.response?.status !== 401 && error.response?.status !== 403) {
+
+        if (!isRoleChecking && (isRoleError || isTrainer === false)) {
             navigate('/unauthorizedaccess', { replace: true });
         }
-      } finally {
-        setIsLoadingRole(false);
-      }
+    }, [user, authLoading, isTrainer, isRoleChecking, isRoleError, navigate]);
+
+    return {
+        user,
+        loading: authLoading || isRoleChecking,
+        isTrainer,
     };
-
-    checkUserRole();
-  }, [user, authLoading, navigate, axiosSecure]);
-
-  // Return relevant states for Trainer Dashboard
-  return { user, loading: authLoading || isLoadingRole, isTrainer };
 };
 
 export default useTrainerHook;

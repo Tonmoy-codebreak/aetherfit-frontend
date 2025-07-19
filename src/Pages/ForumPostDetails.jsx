@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useContext } from "react";
 import { useParams, Link } from "react-router";
+import Swal from 'sweetalert2';
 
 import {
     BiUpvote,
@@ -9,95 +10,152 @@ import {
 } from "react-icons/bi";
 import { AuthContext } from "../AuthProvider/Authcontext";
 import useAxios from "../hooks/useAxios";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ForumPostDetails = () => {
     useEffect(() => {
         document.title = "AetherFit | Forum Details";
     }, []);
+
     const { id } = useParams();
     const { user } = useContext(AuthContext);
-    const axiosSecure = useAxios()
+    const axiosSecure = useAxios();
+    const queryClient = useQueryClient();
 
-    const [forum, setForum] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [userVote, setUserVote] = useState(null);
-
-    const fetchForum = useCallback(async () => {
-        if (!id) return; // Removed user?.email check here to allow public viewing
-
-        try {
-            setLoading(true);
+    const {
+        data,
+        isLoading,
+        isError,
+        error,
+    } = useQuery({
+        queryKey: ['forumDetails', id, user?.email],
+        queryFn: async () => {
+            if (!id) throw new Error("Forum ID is missing.");
             const params = user?.email ? { params: { userEmail: user.email } } : {};
             const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums/${id}`, params);
+            return res.data;
+        },
+        enabled: !!id,
+        staleTime: 1000 * 60,
+    });
 
-            setForum(res.data.forum || null);
-            // Only set userVote if user is logged in and data is available
-            if (user?.email) {
-                setUserVote(res.data.userVote || null);
+    const forum = data?.forum || null;
+    const userVote = data?.userVote || null;
+
+    const { mutate: voteMutate } = useMutation({
+        mutationFn: async (votePayload) => {
+            const res = await axiosSecure.patch(
+                `${import.meta.env.VITE_API_URL}/forums/${id}/vote`,
+                votePayload
+            );
+            return res.data;
+        },
+        onMutate: async (newVotePayload) => {
+            await queryClient.cancelQueries(['forumDetails', id, user?.email]);
+
+            const previousForumData = queryClient.getQueryData(['forumDetails', id, user?.email]);
+
+            queryClient.setQueryData(['forumDetails', id, user?.email], (oldData) => {
+                if (!oldData || !oldData.forum) return oldData;
+
+                const currentForum = oldData.forum;
+                let newTotalUpVotes = currentForum.totalUpVotes || 0;
+                let newTotalDownVotes = currentForum.totalDownVotes || 0;
+                let newUserVote = oldData.userVote;
+                const type = newVotePayload.voteType;
+                const hasVoted = oldData.userVote === type;
+
+                if (type === 'upvote') {
+                    if (hasVoted) {
+                        newTotalUpVotes--;
+                        newUserVote = null;
+                    } else {
+                        newTotalUpVotes++;
+                        if (oldData.userVote === 'downvote') {
+                            newTotalDownVotes--;
+                        }
+                        newUserVote = 'upvote';
+                    }
+                } else if (type === 'downvote') {
+                    if (hasVoted) {
+                        newTotalDownVotes--;
+                        newUserVote = null;
+                    } else {
+                        newTotalDownVotes++;
+                        if (oldData.userVote === 'upvote') {
+                            newTotalUpVotes--;
+                        }
+                        newUserVote = 'downvote';
+                    }
+                }
+
+                return {
+                    ...oldData,
+                    forum: {
+                        ...currentForum,
+                        totalUpVotes: newTotalUpVotes,
+                        totalDownVotes: newTotalDownVotes,
+                    },
+                    userVote: newUserVote,
+                };
+            });
+
+            return { previousForumData };
+        },
+        onError: (err, newVotePayload, context) => {
+            if (context?.previousForumData) {
+                queryClient.setQueryData(['forumDetails', id, user?.email], context.previousForumData);
             }
-        } catch (err) {
-            console.error("Error fetching forum:", err);
-            setForum(null); // Ensure forum is null if there's an error
-        } finally {
-            setLoading(false);
-        }
-    }, [id, user?.email, axiosSecure]);
+            Swal.fire('Error', err.response?.data?.message || 'Failed to submit vote.', 'error');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries(['forumDetails', id, user?.email]);
+        },
+    });
 
-    useEffect(() => {
-        fetchForum();
-    }, [fetchForum]);
 
-    const handleVote = async (type) => {
+    const handleVote = (type) => {
         if (!user?.email) {
-            // Use SweetAlert2 for better user feedback
-            import('sweetalert2').then((Swal) => {
-                Swal.default.fire({
-                    title: 'Login Required',
-                    text: 'You need to be logged in to vote on forum posts.',
-                    icon: 'info',
-                    background: 'black',
-                    color: '#faba22',
-                    confirmButtonColor: '#faba22',
-                });
+            Swal.fire({
+                title: 'Login Required',
+                text: 'You need to be logged in to vote on forum posts.',
+                icon: 'info',
+                background: 'black',
+                color: '#faba22',
+                confirmButtonColor: '#faba22',
             });
             return;
         }
 
         if (!forum) return;
 
-        const hasVoted = userVote === type;
+        const voteTypeToSend = userVote === type ? "remove" : type;
 
-        try {
-            const res = await axiosSecure.patch(
-                `${import.meta.env.VITE_API_URL}/forums/${id}/vote`,
-                {
-                    userEmail: user.email,
-                    voteType: hasVoted ? "remove" : type,
-                }
-            );
-
-            setForum((prev) => ({
-                ...prev,
-                totalUpVotes: res.data.upvoteCount,
-                totalDownVotes: res.data.downvoteCount,
-            }));
-
-            setUserVote(hasVoted ? null : type);
-        } catch (err) {
-            console.error("Vote error:", err);
-            // Revert optimistic update or show error
-            import('sweetalert2').then((Swal) => {
-                Swal.default.fire('Error', err.response?.data?.message || 'Failed to submit vote.', 'error');
-            });
-            fetchForum(); // Re-fetch to ensure data consistency
-        }
+        voteMutate({
+            userEmail: user.email,
+            voteType: voteTypeToSend,
+        });
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen flex justify-center items-center bg-zinc-950 text-white">
                 <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
                 <p className="ml-4 text-lg">Loading forum details...</p>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="min-h-screen flex flex-col justify-center items-center text-white bg-zinc-950 p-6">
+                <p className="text-xl font-medium text-red-500 mb-4">Error loading forum: {error.message || 'Unknown error'}</p>
+                <Link
+                    to="/forum"
+                    className="mt-4 bg-[#faba22] hover:bg-yellow-400 px-6 py-3 rounded-lg text-black font-semibold transition shadow-lg"
+                >
+                    Go Back to Forums
+                </Link>
             </div>
         );
     }
@@ -141,14 +199,14 @@ const ForumPostDetails = () => {
                     </p>
                 </div>
 
-                <div className="flex gap-4 flex-wrap"> {/* Added flex-wrap for responsiveness */}
+                <div className="flex gap-4 flex-wrap">
                     <button
                         type="button"
                         onClick={() => handleVote("upvote")}
-                        disabled={userVote === "downvote" && user?.email} // Only disable if downvoted AND user is logged in
+                        disabled={userVote === "downvote" && user?.email}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold shadow-md transition-all duration-300 text-sm
                             ${
-                                !user?.email // If not logged in, visually indicate it's not active
+                                !user?.email
                                 ? "bg-zinc-700 cursor-not-allowed text-zinc-400"
                                 : userVote === "downvote"
                                     ? "bg-gray-700 cursor-not-allowed text-gray-400"
@@ -162,10 +220,10 @@ const ForumPostDetails = () => {
                     <button
                         type="button"
                         onClick={() => handleVote("downvote")}
-                        disabled={userVote === "upvote" && user?.email} // Only disable if upvoted AND user is logged in
+                        disabled={userVote === "upvote" && user?.email}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold shadow-md transition-all duration-300 text-sm
                             ${
-                                !user?.email // If not logged in, visually indicate it's not active
+                                !user?.email
                                 ? "bg-zinc-700 cursor-not-allowed text-zinc-400"
                                 : userVote === "upvote"
                                     ? "bg-gray-700 cursor-not-allowed text-gray-400"

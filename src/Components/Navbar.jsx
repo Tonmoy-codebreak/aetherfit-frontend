@@ -15,7 +15,13 @@ const Navbar = () => {
       Swal.fire("Successfully logged out");
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("Logout failed: " + error.message);
+      
+      Swal.fire({
+  icon: "error",
+  title: "Oops...",
+  text: `${error.message}`,
+ 
+});
     }
   };
 
@@ -38,7 +44,7 @@ const Navbar = () => {
       </li>
       <li>
         <NavLink to="/forum" className="text-white hover:text-[#faba22] px-3 py-2 text-lg rounded-md">
-          Forum
+          Forums
         </NavLink>
       </li>
       {user && (

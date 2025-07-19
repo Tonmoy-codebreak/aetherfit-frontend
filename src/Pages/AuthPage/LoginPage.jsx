@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router"; 
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "../../AuthProvider/useAuth";
 import Swal from "sweetalert2";
 
 const LoginPage = () => {
+      useEffect(() => {
+            document.title = "AetherFit | Sign In"; 
+        }, []);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const location = useLocation(); // Get location object
+    const location = useLocation(); 
 
     const { signinUser, signWithGoogle } = useAuth();
 
@@ -18,7 +21,7 @@ const LoginPage = () => {
         setError(null);
         try {
             const result = await signinUser(email, password);
-            console.log(result);
+            
             // Sweeeeet Aleeeert
             Swal.fire({
                 title: '<span class="font-funnel" style="color:#faba22">Login Successful!</span>', 

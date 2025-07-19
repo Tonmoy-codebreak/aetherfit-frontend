@@ -1,30 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import useAxios from '../../hooks/useAxios';
+import { useQuery } from '@tanstack/react-query';
 
 const LatestPost = () => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const axiosSecure = useAxios()
+    const axiosSecure = useAxios();
 
-    useEffect(() => {
-        const fetchLatestPosts = async () => {
-            try {
-                setLoading(true);
-                const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums`);
-                setPosts(response.data.forums);
-            } catch (err) {
-                console.error("Error fetching latest forum posts:", err);
-                setError("Failed to load latest posts. Please try again later.");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const {
+        data: posts,
+        isLoading,
+        isError,
+        error,
+    } = useQuery({
+        queryKey: ['latestForumPosts'],
+        queryFn: async () => {
+            const response = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums`);
+            return response.data.forums;
+        },
+        refetchOnWindowFocus: false, 
+    });
 
-        fetchLatestPosts();
-    }, []);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="min-h-[300px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
                 <p className="text-white text-xl">Loading latest posts...</p>
@@ -32,15 +27,15 @@ const LatestPost = () => {
         );
     }
 
-    if (error) {
+    if (isError) {
         return (
             <div className="min-h-[300px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
-                <p className="text-red-400 text-xl">{error}</p>
+                <p className="text-red-400 text-xl">Failed to load latest posts: {error.message || "An unknown error occurred."}</p>
             </div>
         );
     }
 
-    if (posts.length === 0) {
+    if (!posts || posts.length === 0) {
         return (
             <div className="min-h-[300px] bg-zinc-950 flex items-center justify-center p-4 font-sans">
                 <p className="text-zinc-400 text-xl">No recent forum posts available.</p>

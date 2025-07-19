@@ -53,7 +53,7 @@ const CheckoutForm = () => {
       payment_method: { card },
     });
 
-    console.log("Class ID:", paymentInfo.classId);
+    
 
     if (error) {
       setMessage(error.message);

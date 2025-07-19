@@ -130,7 +130,7 @@ const Newsletter = ({ user }) => {
 
       </div>
       {/* Optional: Add a custom style block for the pattern */}
-      <style jsx>{`
+      <style>{`
         .bg-pattern-light {
           background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zm0 30V30h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 30V60h-2v-4h-4v-2h4v-4h2v4h4v2h-4zM6 54v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0-30V24H4v4H0v2h4v4h2v-4h4v-2H6zm0-30V0H4v4H0v2h4v4h2V6H4V4H0z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
         }

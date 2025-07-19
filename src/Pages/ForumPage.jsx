@@ -4,6 +4,7 @@ import { BiUpvote, BiDownvote } from 'react-icons/bi';
 import { FaUserShield, FaUserTie } from 'react-icons/fa';
 import { useAuth } from '../AuthProvider/useAuth';
 import useAxios from '../hooks/useAxios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ForumPage = () => {
     useEffect(() => {
@@ -12,41 +13,114 @@ const ForumPage = () => {
 
     const { user } = useAuth();
     const axiosSecure = useAxios();
-    const [forums, setForums] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
+
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const postsPerPage = 6;
 
-    const fetchForums = async (page) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const {
+        data: forumData,
+        isLoading: loading,
+        isError: isForumError,
+        error: forumError,
+    } = useQuery({
+        queryKey: ['forums', currentPage, user?.email],
+        queryFn: async () => {
             const userEmailQuery = user?.email ? `&userEmail=${user.email}` : '';
-            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums?page=${page}&limit=${postsPerPage}${userEmailQuery}`);
-            setForums(res.data.forums);
-            setTotalPages(res.data.totalPages);
-            setCurrentPage(res.data.page);
-        } catch (err) {
-            setError('Failed to load forum posts. Please try again.');
-            Swal.fire('Error', 'Failed to load forum posts.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
+            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/forums?page=${currentPage}&limit=${postsPerPage}${userEmailQuery}`);
+            return res.data;
+        },
+        keepPreviousData: true,
+        staleTime: 1000 * 60,
+        onError: (err) => {
+            Swal.fire('Error', err.response?.data?.message || 'Failed to load forum posts.', 'error');
+        },
+    });
 
-    useEffect(() => {
-        fetchForums(1);
-    }, [user, axiosSecure]);
+    const forums = forumData?.forums || [];
+    const totalPages = forumData?.totalPages || 1;
+
+    const { mutate: handleVoteMutation } = useMutation({
+        mutationFn: async ({ forumId, voteType }) => {
+            const res = await axiosSecure.patch(`${import.meta.env.VITE_API_URL}/forums/${forumId}/vote`, {
+                userEmail: user.email,
+                voteType,
+            });
+            return res.data;
+        },
+        onMutate: async (newVote) => {
+            await queryClient.cancelQueries(['forums', currentPage, user?.email]);
+
+            const previousForums = queryClient.getQueryData(['forums', currentPage, user?.email]);
+
+            queryClient.setQueryData(['forums', currentPage, user?.email], (oldData) => {
+                const updatedForums = oldData.forums.map(forum => {
+                    if (forum._id === newVote.forumId) {
+                        let newTotalUpVotes = forum.totalUpVotes;
+                        let newTotalDownVotes = forum.totalDownVotes;
+                        let newUserVote = forum.userVote;
+
+                        if (newVote.voteType === 'upvote') {
+                            if (forum.userVote === 'upvote') {
+                                newTotalUpVotes--;
+                                newUserVote = null;
+                            } else {
+                                newTotalUpVotes++;
+                                if (forum.userVote === 'downvote') {
+                                    newTotalDownVotes--;
+                                }
+                                newUserVote = 'upvote';
+                            }
+                        } else if (newVote.voteType === 'downvote') {
+                            if (forum.userVote === 'downvote') {
+                                newTotalDownVotes--;
+                                newUserVote = null;
+                            } else {
+                                newTotalDownVotes++;
+                                if (forum.userVote === 'upvote') {
+                                    newTotalUpVotes--;
+                                }
+                                newUserVote = 'downvote';
+                            }
+                        } else if (newVote.voteType === 'remove') {
+                             if (forum.userVote === 'upvote') {
+                                 newTotalUpVotes--;
+                             } else if (forum.userVote === 'downvote') {
+                                 newTotalDownVotes--;
+                             }
+                             newUserVote = null;
+                        }
+
+                        return {
+                            ...forum,
+                            totalUpVotes: newTotalUpVotes,
+                            totalDownVotes: newTotalDownVotes,
+                            userVote: newUserVote,
+                        };
+                    }
+                    return forum;
+                });
+                return { ...oldData, forums: updatedForums };
+            });
+
+            return { previousForums };
+        },
+        onError: (err, newVote, context) => {
+            queryClient.setQueryData(['forums', currentPage, user?.email], context.previousForums);
+            Swal.fire('Error', err.response?.data?.message || 'Failed to submit vote.', 'error');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries(['forums', currentPage, user?.email]);
+        },
+    });
 
     const handlePageChange = (page) => {
         if (page > 0 && page <= totalPages) {
-            fetchForums(page);
+            setCurrentPage(page);
         }
     };
 
-    const handleVote = async (forumId, voteType) => {
+    const onVoteClick = (forumId, voteType) => {
         if (!user?.email) {
             Swal.fire({
                 title: 'Login Required',
@@ -58,31 +132,7 @@ const ForumPage = () => {
             });
             return;
         }
-
-        try {
-            setForums(prevForums =>
-                prevForums.map(forum =>
-                    forum._id === forumId
-                        ? {
-                            ...forum,
-                            totalUpVotes: forum.userVote === 'upvote' ? forum.totalUpVotes - 1 : voteType === 'upvote' ? forum.totalUpVotes + 1 : forum.totalUpVotes,
-                            totalDownVotes: forum.userVote === 'downvote' ? forum.totalDownVotes - 1 : voteType === 'downvote' ? forum.totalDownVotes + 1 : forum.totalDownVotes,
-                            userVote: forum.userVote === voteType ? null : voteType
-                        }
-                        : forum
-                )
-            );
-
-            await axiosSecure.patch(`${import.meta.env.VITE_API_URL}/forums/${forumId}/vote`, {
-                userEmail: user.email,
-                voteType,
-            });
-
-            fetchForums(currentPage);
-        } catch (err) {
-            Swal.fire('Error', err.response?.data?.message || 'Failed to submit vote.', 'error');
-            fetchForums(currentPage);
-        }
+        handleVoteMutation({ forumId, voteType });
     };
 
     if (loading) {
@@ -93,10 +143,10 @@ const ForumPage = () => {
         );
     }
 
-    if (error) {
+    if (isForumError) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
-                <p className="text-red-500 text-xl">{error}</p>
+                <p className="text-red-500 text-xl">{forumError.message || 'Failed to load forum posts.'}</p>
             </div>
         );
     }
@@ -156,14 +206,14 @@ const ForumPage = () => {
                                         <div className="flex justify-between items-center mt-auto pt-2 border-t border-zinc-700">
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => handleVote(forum._id, forum.userVote === 'upvote' ? 'remove' : 'upvote')}
+                                                    onClick={() => onVoteClick(forum._id, forum.userVote === 'upvote' ? 'remove' : 'upvote')}
                                                     className={`p-2 rounded-full ${forum.userVote === 'upvote' ? 'bg-green-600' : 'bg-zinc-700 hover:bg-green-500'} transition`}
                                                 >
                                                     <BiUpvote size={18} />
                                                 </button>
                                                 <span className="text-sm text-white">{forum.totalUpVotes}</span>
                                                 <button
-                                                    onClick={() => handleVote(forum._id, forum.userVote === 'downvote' ? 'remove' : 'downvote')}
+                                                    onClick={() => onVoteClick(forum._id, forum.userVote === 'downvote' ? 'remove' : 'downvote')}
                                                     className={`p-2 rounded-full ${forum.userVote === 'downvote' ? 'bg-red-600' : 'bg-zinc-700 hover:bg-red-500'} transition`}
                                                 >
                                                     <BiDownvote size={18} />

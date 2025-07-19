@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import {useQuery} from "@tanstack/react-query";
 import useAxios from "../hooks/useAxios";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { Link } from "react-router"; 
 
-// Utility function to get social icon component
 const getSocialIcon = (url) => {
   if (!url || typeof url !== "string") return null;
   const lowerUrl = url.toLowerCase();
@@ -29,8 +28,9 @@ const AllTrainersPage = () => {
   };
 
   const { data: trainers = [], isLoading, error } = useQuery({
-    queryKey: ["trainers"],
+    queryKey: ["allTrainers"], // Unique query key
     queryFn: fetchTrainers,
+    staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
   });
 
   if (isLoading) return <div className="flex justify-center items-center h-screen bg-zinc-950 text-[#faba22] font-semibold text-xl">Loading trainers...</div>;
@@ -47,36 +47,32 @@ const AllTrainersPage = () => {
           const displaySkills = expertise.length ? expertise : skills.length ? skills : ["Fitness Enthusiast"];
           return (
             <div key={_id} className="group relative rounded-3xl bg-zinc-900 overflow-hidden shadow-xl
-                                       transform transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl
-                                       border border-zinc-800 hover:border-[#faba22]">
-              {/* Image Section */}
+                                     transform transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl
+                                     border border-zinc-800 hover:border-[#faba22]">
               <div className="relative w-full aspect-[4/3] overflow-hidden">
                 <img
                   src={photoURL || "https://placehold.co/400x300/363636/DDDDDD?text=No+Photo"}
                   alt={displayName}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                  onError={(e) => (e.target.src = "https://placehold.co/400x300/363636/DDDDDD?text=No+Photo")}
                 />
-                {/* Optional: Overlay or gradient effect on image */}
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/70 via-transparent to-transparent"></div>
               </div>
 
-              {/* Content Section */}
-              <div className="p-6 pt-3 relative -mt-12 z-10"> {/* Pulled up slightly */}
+              <div className="p-6 pt-3 relative -mt-12 z-10">
                 <h2 className="text-2xl font-bold text-white mb-2 truncate" title={displayName}>{displayName}</h2>
                 <p className="text-sm text-zinc-400 mb-3 font-medium">{displaySkills.join(", ")}</p>
                 <p className="text-xs text-zinc-300 mb-4 font-light">Experience: <span className="font-semibold text-[#faba22]">{yearsOfExperience}</span> years</p>
 
-                {/* Slots Section */}
                 <div className="flex flex-wrap gap-2 mb-5">
                   {slots.length > 0 ? slots.slice(0, 3).map((slot, idx) => (
                     <span key={idx} className="bg-[#faba22] text-zinc-950 text-xs px-3 py-1 rounded-full font-semibold opacity-90
-                                               hover:opacity-100 transition-opacity duration-200 cursor-default">
+                                           hover:opacity-100 transition-opacity duration-200 cursor-default">
                       {slot.slotName || "Slot"}
                     </span>
                   )) : <span className="text-xs text-zinc-500 italic">No available slots</span>}
                 </div>
 
-                {/* Footer Section: Know More & Social Links */}
                 <div className="flex justify-between items-center border-t pt-5 border-zinc-700">
                   <Link
                     to={`/trainers/${_id}`}

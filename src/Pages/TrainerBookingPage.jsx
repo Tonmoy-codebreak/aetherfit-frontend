@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router"; 
 import Swal from "sweetalert2";
 import { useAuth } from "../AuthProvider/useAuth";
 import useAxios from "../hooks/useAxios";
+import { useQuery } from "@tanstack/react-query"; 
 
 const packages = [
   {
@@ -53,56 +54,50 @@ const TrainerBookingPage = () => {
   const { user } = useAuth();
   const axiosSecure = useAxios();
 
-  const [trainer, setTrainer] = useState(null);
-  const [classInfo, setClassInfo] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentUserRole, setCurrentUserRole] = useState(null);
 
-  useEffect(() => {
-    const fetchTrainerAndClass = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers/${trainerId}`);
-        const trainerData = res.data;
-        setTrainer(trainerData);
+  // Query to fetch trainer details and derive class info
+  const {
+    data: trainerData,
+    isLoading: isTrainerLoading,
+    isError: isTrainerError,
+    error: trainerError,
+  } = useQuery({
+    queryKey: ["trainerDetails", trainerId],
+    queryFn: async () => {
+      const res = await axiosSecure.get(
+        `${import.meta.env.VITE_API_URL}/trainers/${trainerId}`
+      );
+      return res.data;
+    },
+    enabled: !!trainerId, // Only fetch if trainerId is available
+    staleTime: 1000 * 60 * 5, // Cache trainer data for 5 minutes
+  });
 
-        const decodedTime = decodeURIComponent(time);
-        const matchedSlot = trainerData.slots?.find(
-          (slot) => slot.day === day && slot.timeRange === decodedTime
-        );
+  // Derive trainer and classInfo from trainerData
+  const trainer = trainerData;
+  const decodedTime = decodeURIComponent(time);
+  const classInfo = trainerData?.slots?.find(
+    (slot) => slot.day === day && slot.timeRange === decodedTime
+  )?.classInfo;
 
-        if (matchedSlot && matchedSlot.classInfo) {
-          setClassInfo(matchedSlot.classInfo);
-        } else {
-          setClassInfo(null);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load trainer details.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchUserRole = async () => {
-      if (!user?.email) {
-        setCurrentUserRole(null);
-        return;
-      }
-      try {
-        const userRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
-        setCurrentUserRole(userRes.data.role);
-      } catch (err) {
-        console.error("Error fetching user role:", err);
-        setCurrentUserRole(null);
-      }
-    };
-
-    fetchTrainerAndClass();
-    fetchUserRole();
-  }, [trainerId, day, time, user?.email]);
+  // Query to fetch current user's role
+  const {
+    data: currentUserRole,
+    isLoading: isRoleLoading,
+    isError: isRoleError,
+    error: roleError,
+  } = useQuery({
+    queryKey: ["userRole", user?.email],
+    queryFn: async () => {
+      const userRes = await axiosSecure.get(
+        `${import.meta.env.VITE_API_URL}/users?email=${user.email}`
+      );
+      return userRes.data.role;
+    },
+    enabled: !!user?.email, // Only fetch if user email is available
+    staleTime: 1000 * 60 * 5, // Cache role for 5 minutes
+  });
 
   const handleJoinNow = () => {
     if (!selectedPackage) {
@@ -138,18 +133,18 @@ const TrainerBookingPage = () => {
 
   const isJoinNowDisabled = currentUserRole === "admin" || currentUserRole === "trainer";
 
-  if (loading)
+  if (isTrainerLoading || isRoleLoading)
     return (
       <div className="flex justify-center items-center min-h-screen bg-zinc-950">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
-        <p className="text-[#faba22] ml-4 text-lg font-sans">Loading trainer info...</p>
+        <p className="text-[#faba22] ml-4 text-lg font-sans">Loading info...</p>
       </div>
     );
 
-  if (error)
+  if (isTrainerError || isRoleError)
     return (
       <div className="flex justify-center items-center min-h-screen bg-zinc-950 text-red-500 text-lg font-sans">
-        {error}
+        {trainerError?.message || roleError?.message || "Failed to load page."}
       </div>
     );
 
@@ -163,7 +158,6 @@ const TrainerBookingPage = () => {
   return (
     <div className="min-h-screen bg-zinc-950 text-[#faba22] font-sans p-4 sm:p-6 md:p-10 pt-24">
       <div className="max-w-6xl mx-auto rounded-2xl shadow-2xl p-4 sm:p-8 md:p-12">
-
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-8 text-center text-white font-funnel drop-shadow-lg leading-tight">
           Booking with <span className="text-[#faba22]">{trainer.name}</span>
         </h1>
@@ -188,10 +182,6 @@ const TrainerBookingPage = () => {
                   <span className="font-bold text-[#faba22]">Difficulty: </span>
                   <span className="text-white">{classInfo.difficulty}</span>
                 </p>
-                {/* <p className="text-zinc-300 text-base sm:text-lg md:text-xl">
-                  <span className="font-bold text-[#faba22]">Duration: </span>
-                  <span className="text-white">{classInfo.durationMinutes} minutes</span>
-                </p> */}
               </>
             )}
           </div>

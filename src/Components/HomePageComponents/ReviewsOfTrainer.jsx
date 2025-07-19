@@ -4,33 +4,40 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import useAxios from "../../hooks/useAxios";
+import { useQuery } from "@tanstack/react-query";
 
 const ReviewsOfTrainer = () => {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const axiosSecure = useAxios();
 
   const prevRef = useRef(null);
   const nextRef = useRef(null);
+  const [swiperInstance, setSwiperInstance] = useState(null);
+
+  const {
+    data: reviews,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["reviewsByPopularTrainers"],
+    queryFn: async () => {
+      const res = await axiosSecure.get(
+        `${import.meta.env.VITE_API_URL}/reviews-by-popular-trainers`
+      );
+      return res.data;
+    },
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosSecure.get(
-          `${import.meta.env.VITE_API_URL}/reviews-by-popular-trainers`
-        );
-        setReviews(res.data);
-      } catch (err) {
-        console.error("Error fetching reviews:", err);
-        setError("Failed to load reviews.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReviews();
-  }, []);
+    if (swiperInstance && prevRef.current && nextRef.current) {
+      swiperInstance.params.navigation.prevEl = prevRef.current;
+      swiperInstance.params.navigation.nextEl = nextRef.current;
+      swiperInstance.navigation.destroy();
+      swiperInstance.navigation.init();
+      swiperInstance.navigation.update();
+    }
+  }, [swiperInstance, prevRef, nextRef]);
 
   const renderStars = (rating) =>
     Array.from({ length: 5 }).map((_, i) => (
@@ -45,9 +52,15 @@ const ReviewsOfTrainer = () => {
       </svg>
     ));
 
-  if (loading) return <p className="text-white text-center py-12">Loading...</p>;
-  if (error) return <p className="text-red-400 text-center py-12">{error}</p>;
-  if (reviews.length === 0)
+  if (isLoading)
+    return <p className="text-white text-center py-12">Loading...</p>;
+  if (isError)
+    return (
+      <p className="text-red-400 text-center py-12">
+        Failed to load reviews: {error.message || "An unknown error occurred."}
+      </p>
+    );
+  if (!reviews || reviews.length === 0)
     return <p className="text-zinc-400 text-center py-12">No reviews available yet.</p>;
 
   return (
@@ -75,15 +88,7 @@ const ReviewsOfTrainer = () => {
             prevEl: prevRef.current,
             nextEl: nextRef.current,
           }}
-          onSwiper={(swiper) => {
-            setTimeout(() => {
-              swiper.params.navigation.prevEl = prevRef.current;
-              swiper.params.navigation.nextEl = nextRef.current;
-              swiper.navigation.destroy();
-              swiper.navigation.init();
-              swiper.navigation.update();
-            });
-          }}
+          onSwiper={setSwiperInstance}
           breakpoints={{
             0: { slidesPerView: 1 },
             768: { slidesPerView: 2 },
@@ -107,9 +112,15 @@ const ReviewsOfTrainer = () => {
                       "https://placehold.co/150x150/3f3f46/faba22?text=T";
                   }}
                 />
-                <h3 className="text-white text-xl font-bold mt-4">{review.trainerName || "Unknown Trainer"}</h3>
-                <div className="flex justify-center space-x-1 mt-2">{renderStars(review.rating)}</div>
-                <p className="text-zinc-400 text-sm mt-1">{review.rating}/5 Rating</p>
+                <h3 className="text-white text-xl font-bold mt-4">
+                  {review.trainerName || "Unknown Trainer"}
+                </h3>
+                <div className="flex justify-center space-x-1 mt-2">
+                  {renderStars(review.rating)}
+                </div>
+                <p className="text-zinc-400 text-sm mt-1">
+                  {review.rating}/5 Rating
+                </p>
                 <p className="text-zinc-200 text-base font-light leading-relaxed tracking-wide mt-6">
                   {review.feedback}
                 </p>
@@ -149,13 +160,14 @@ const ReviewsOfTrainer = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .swiper-button-prev,
         .swiper-button-next {
           display: none !important;
         }
         @keyframes pulse {
-          0%, 100% {
+          0%,
+          100% {
             transform: scale(1);
             box-shadow: 0 0 10px rgba(250, 186, 34, 0.6);
           }

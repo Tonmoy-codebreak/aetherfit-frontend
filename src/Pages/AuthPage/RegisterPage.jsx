@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router"; 
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "../../AuthProvider/useAuth";
@@ -7,9 +7,12 @@ import Swal from "sweetalert2";
 import useAxios from "../../hooks/useAxios";
 
 const RegisterPage = () => {
+      useEffect(() => {
+            document.title = "AetherFit | Sign Up"; 
+        }, []);
     const { createUser, signWithGoogle } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation(); // Initialize useLocation
+    const location = useLocation(); 
     const axios = useAxios();
 
     const [fullName, setFullName] = useState("");
@@ -17,8 +20,7 @@ const RegisterPage = () => {
     const [password, setPassword] = useState("");
     const [imageFile, setImageFile] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null); // eslint-disable-line no-unused-vars
-
+    const [error, setError] = useState(null); 
     //  (just pure base64)
     const toBase64 = (file) =>
         new Promise((resolve, reject) => {

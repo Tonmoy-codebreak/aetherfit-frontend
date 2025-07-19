@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router"; 
+import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query"; 
 
 import { IoMdDoneAll } from "react-icons/io";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
@@ -33,88 +34,78 @@ const TrainerDetailsPage = () => {
     const navigate = useNavigate();
 
     const { user } = useAuth();
-    const axiosSecure = useAxios()
-    const [trainer, setTrainer] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [bookedSlots, setBookedSlots] = useState([]);
-    // This state will now check if the user is already a trainer OR has a pending application
-    const [isUserAlreadyTrainerOrApplied, setIsUserAlreadyTrainerOrApplied] = useState(false);
-    const [currentUserRole, setCurrentUserRole] = useState(null); // State to store the logged-in user's role
+    const axiosSecure = useAxios();
 
-    useEffect(() => {
-        const fetchTrainer = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers/${id}`);
-                if (!res.data || !res.data._id) {
-                    throw new Error("Trainer data not found");
-                }
-                setTrainer(res.data);
-            } catch (err) {
-                setError("Failed to load trainer details. Please try again later.");
-                console.error("Fetch trainer error:", err);
-            } finally {
-                setLoading(false);
+    // Query to fetch trainer details
+    const {
+        data: trainer,
+        isLoading: isTrainerLoading,
+        isError: isTrainerError,
+        error: trainerError,
+    } = useQuery({
+        queryKey: ["trainerDetails", id],
+        queryFn: async () => {
+            if (!id) throw new Error("Trainer ID is missing.");
+            const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainers/${id}`);
+            if (!res.data || !res.data._id) {
+                throw new Error("Trainer data not found");
             }
-        };
+            return res.data;
+        },
+        enabled: !!id, // Only run if id exists
+        staleTime: 1000 * 60 * 5, // Cache trainer data for 5 minutes
+        retry: 1, // Retry once on failure
+    });
 
-        const fetchBookedSlots = async () => {
-            try {
-                if (!user?.email) {
-                    setBookedSlots([]); // Clear if no user
-                    return;
-                }
-                const res = await axiosSecure.get(
-                    `${import.meta.env.VITE_API_URL}/booking-logs`,
-                    { params: { userEmail: user.email } }
-                );
-                // Filter bookings specific to this trainer
-                const bookingsForThisTrainer = res.data.filter(
-                    (booking) => booking.trainerId === id
-                );
-                setBookedSlots(bookingsForThisTrainer);
-            } catch (err) {
-                console.error("Failed to fetch booked slots:", err);
-                // Optionally show a user-friendly error for booked slots
+    // Query to fetch booked slots for the current user and trainer
+    const {
+        data: bookedSlotsData,
+        isLoading: isBookedSlotsLoading,
+        isError: isBookedSlotsError,
+    } = useQuery({
+        queryKey: ["bookedSlots", user?.email, id],
+        queryFn: async () => {
+            if (!user?.email || !id) return []; // Return empty array if no user or trainer ID
+            const res = await axiosSecure.get(
+                `${import.meta.env.VITE_API_URL}/booking-logs`,
+                { params: { userEmail: user.email } }
+            );
+            return res.data.filter((booking) => booking.trainerId === id);
+        },
+        enabled: !!user?.email && !!id, // Only run if user email and trainer ID exist
+        staleTime: 1000 * 30, // Shorter cache for booked slots
+        retry: 1,
+    });
+    const bookedSlots = bookedSlotsData || [];
+
+    // Query to check user's role and trainer application status
+    const {
+        data: userStatusData,
+        isLoading: isUserStatusLoading,
+        isError: isUserStatusError,
+    } = useQuery({
+        queryKey: ["userStatus", user?.email],
+        queryFn: async () => {
+            if (!user?.email) {
+                return { role: null, hasPendingApplication: false };
             }
-        };
+            const [userRes, applicationsRes] = await Promise.all([
+                axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`),
+                axiosSecure.get(`${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`),
+            ]);
+            const userDbData = userRes.data;
+            const hasPendingApplication = applicationsRes.data.some(
+                (app) => app.email === user.email && app.status === "pending"
+            );
+            return { role: userDbData.role, hasPendingApplication };
+        },
+        enabled: !!user?.email, // Only run if user email exists
+        staleTime: 1000 * 60, // Cache user status for 1 minute
+        retry: 1,
+    });
 
-        const checkUserStatus = async () => {
-            try {
-                if (!user?.email) {
-                    setCurrentUserRole(null);
-                    setIsUserAlreadyTrainerOrApplied(false);
-                    return;
-                }
-
-                // Fetch current user's role from your backend
-                const userRes = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${user.email}`);
-                const userDbData = userRes.data;
-                setCurrentUserRole(userDbData.role); // Set the user's role
-
-                // Check for pending applications
-                const applicationsRes = await axiosSecure.get(
-                    `${import.meta.env.VITE_API_URL}/trainer-applications?email=${user.email}`
-                );
-                const hasPendingApplication = applicationsRes.data.some((app) => app.email === user.email && app.status === "pending");
-
-                // Set the combined status: true if user is a trainer OR has a pending application
-                setIsUserAlreadyTrainerOrApplied(userDbData.role === "trainer" || hasPendingApplication);
-
-            } catch (err) {
-                console.error("User status check error:", err);
-                setCurrentUserRole(null); // Reset role on error
-                setIsUserAlreadyTrainerOrApplied(false);
-            }
-        };
-
-        fetchTrainer();
-        fetchBookedSlots();
-        checkUserStatus(); // Call the new combined check
-    }, [id, user?.email, axiosSecure]); // Re-run if trainer ID or user email changes
+    const currentUserRole = userStatusData?.role || null;
+    const isUserAlreadyTrainerOrApplied = userStatusData?.hasPendingApplication || currentUserRole === "trainer";
 
     const isSlotBooked = (day, timeRange) => {
         return bookedSlots.some(
@@ -122,8 +113,8 @@ const TrainerDetailsPage = () => {
         );
     };
 
-    // Loading state UI
-    if (loading)
+    // Combined loading state
+    if (isTrainerLoading || isBookedSlotsLoading || isUserStatusLoading)
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
                 <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
@@ -131,11 +122,11 @@ const TrainerDetailsPage = () => {
             </div>
         );
 
-    // Error state UI
-    if (error)
+    // Combined error state
+    if (isTrainerError || isBookedSlotsError || isUserStatusError)
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950 text-red-500 text-xl font-inter">
-                {error}
+                {trainerError?.message || "Failed to load details. Please try again later."}
             </div>
         );
 
@@ -179,16 +170,12 @@ const TrainerDetailsPage = () => {
     return (
         <div className="min-h-screen bg-zinc-950 text-[#faba22] font-inter p-8 sm:p-12 lg:p-16">
             <div className="max-w-7xl mx-auto rounded-2xl shadow-2xl p-8 md:p-12 ">
-                {/* Main Title */}
                 <h1 className="text-5xl md:text-6xl font-extrabold mb-12 text-center text-white font-funnel drop-shadow-lg">
                     Trainer <span className="text-[#faba22]">Profile</span>
                 </h1>
 
-                {/* Main Content Sections (Left and Right) */}
                 <div className="flex flex-col md:flex-row gap-12 mb-16">
-                    {/* Left Column: Trainer Info */}
                     <div className="md:w-1/2 space-y-8">
-                        {/* Trainer Photo */}
                         <div className="relative overflow-hidden rounded-xl border border-zinc-700 shadow-xl transform transition-transform duration-300 hover:scale-[1.01]">
                             <img
                                 src={photoURL}
@@ -200,20 +187,18 @@ const TrainerDetailsPage = () => {
                             <h2 className="absolute bottom-6 left-6 text-4xl font-bold text-white drop-shadow-lg">{name}</h2>
                         </div>
 
-                        {/* Bio Section */}
                         <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
                             <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">About Me</h3>
                             <p className="text-zinc-300 leading-relaxed text-base">{bio}</p>
                         </div>
 
-                        {/* Skills Section */}
                         <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
                             <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Expertise</h3>
                             {displaySkills.length > 0 ? (
                                 <div className="flex flex-wrap gap-3">
                                     {displaySkills.map((skill, idx) => (
                                         <span key={idx} className="px-5 py-2 rounded-full bg-zinc-700 text-zinc-200 text-sm font-medium shadow-md
-                                                                    transition-all duration-300 hover:bg-[#faba22] hover:text-black cursor-default">
+                                                transition-all duration-300 hover:bg-[#faba22] hover:text-black cursor-default">
                                             {skill}
                                         </span>
                                     ))}
@@ -223,7 +208,6 @@ const TrainerDetailsPage = () => {
                             )}
                         </div>
 
-                        {/* Experience & Availability Section */}
                         <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700 grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Experience</h3>
@@ -240,7 +224,6 @@ const TrainerDetailsPage = () => {
                             </div>
                         </div>
 
-                        {/* Social Links */}
                         <div className="bg-zinc-800 p-6 rounded-xl shadow-inner border border-zinc-700">
                             <h3 className="text-2xl font-semibold mb-4 text-[#faba22]">Connect with {name.split(' ')[0]}</h3>
                             <div className="flex gap-6 flex-wrap">
@@ -268,7 +251,6 @@ const TrainerDetailsPage = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: Available Slots */}
                     <div className="md:w-1/2 bg-zinc-900 p-8 rounded-xl shadow-xl border border-zinc-800">
                         <h2 className="text-4xl font-extrabold mb-8 text-center text-white font-funnel">Available Slots</h2>
 
@@ -282,11 +264,11 @@ const TrainerDetailsPage = () => {
                                     .filter(slot => slot && slot.day && slot.timeRange)
                                     .map((slot, idx) => {
                                         const booked = isSlotBooked(slot.day, slot.timeRange);
-                                        const isDisabledForTrainer = currentUserRole === "trainer"; // Disable if current user is a trainer
+                                        const isDisabledForTrainer = currentUserRole === "trainer" || currentUserRole === "admin"; // Also disable for admins
                                         return (
                                             <button
                                                 key={idx}
-                                                disabled={booked || isDisabledForTrainer} // Disable if booked OR if current user is a trainer
+                                                disabled={booked || isDisabledForTrainer}
                                                 onClick={() => !booked && !isDisabledForTrainer && navigate(`/booking/${id}/${slot.day}/${encodeURIComponent(slot.timeRange)}`)}
                                                 className={`
                                                     px-6 py-4 rounded-xl font-bold flex flex-col items-center justify-center text-lg text-center
@@ -299,7 +281,7 @@ const TrainerDetailsPage = () => {
                                                 `}
                                                 title={slot.slotName || `${slot.day} ${slot.timeRange}`}
                                             >
-                                                <span className="text-xl mb-1">{slot.slotName}</span>
+                                                <span className="text-xl mb-1">{slot.slotName || slot.timeRange}</span>
                                                 <span className="text-sm font-normal opacity-80">{slot.day}</span>
                                                 {booked && (
                                                     <div className="mt-2 flex items-center text-green-400">
@@ -314,20 +296,19 @@ const TrainerDetailsPage = () => {
                     </div>
                 </div>
 
-                {/* NEW: Standalone "Want to Help Others?" CTA Section */}
-                {currentUserRole !== "admin" && ( // Only show if user is logged in and not an admin
+                {currentUserRole !== "admin" && (
                     <div className="mt-16 p-10 bg-gradient-to-br from-zinc-800 to-zinc-950 rounded-2xl shadow-2xl text-center border border-zinc-700 animate-fade-in">
                         <h2 className="text-4xl font-extrabold mb-5 text-white font-funnel">Want to Help Others? 💪</h2>
                         <p className="mb-8 text-zinc-300 leading-relaxed text-lg max-w-2xl mx-auto">
                             Join our vibrant team of certified trainers and share your expertise to inspire and guide our community towards their fitness goals. Make a real impact!
                         </p>
 
-                        {!isUserAlreadyTrainerOrApplied ? ( // This condition now correctly checks if user is trainer OR has pending application
+                        {!isUserAlreadyTrainerOrApplied ? (
                             <button
                                 onClick={() => navigate("/betrainer")}
                                 className="px-10 py-5 rounded-full font-extrabold text-xl bg-[#faba22] text-black hover:bg-yellow-500
-                                           transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-2
-                                           focus:outline-none focus:ring-4 focus:ring-[#faba22] focus:ring-opacity-50"
+                                        transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-2
+                                        focus:outline-none focus:ring-4 focus:ring-[#faba22] focus:ring-opacity-50"
                             >
                                 Become a Trainer Today!
                             </button>

@@ -44,9 +44,7 @@ const ActivityLogPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22]"></div>
-        <p className="text-[#faba22] ml-4 text-xl font-semibold font-inter">
-          Loading applications...
-        </p>
+        
       </div>
     );
   }

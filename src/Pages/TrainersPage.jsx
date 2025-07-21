@@ -41,7 +41,7 @@ const AllTrainersPage = () => {
       <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-12 font-funnel pt-10 text-white tracking-wide">
         Meet Our <span className="text-[#faba22]">Elite Trainers</span>
       </h1>
-      <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 max-w-7xl mx-auto">
+      <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
         {trainers.map(({ _id, photoURL, fullName, name, expertise = [], skills = [], yearsOfExperience = 0, socialLinks = [], slots = [] }) => {
           const displayName = fullName || name || "Unnamed Trainer";
           const displaySkills = expertise.length ? expertise : skills.length ? skills : ["Fitness Enthusiast"];

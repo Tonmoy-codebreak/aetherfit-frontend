@@ -118,7 +118,7 @@ const TrainerDetailsPage = () => {
         return (
             <div className="flex justify-center items-center min-h-screen bg-zinc-950">
                 <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-[#faba22] my-auto mx-auto"></div>
-                <p className="text-[#faba22] ml-4 text-xl font-inter">Loading trainer details...</p>
+                
             </div>
         );
 

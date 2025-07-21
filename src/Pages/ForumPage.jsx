@@ -152,7 +152,7 @@ const ForumPage = () => {
     }
 
     return (
-        <div className="bg-zinc-950 pt-8 pb-20 lg:pt-24">
+        <div className="bg-zinc-950 pt-30 pb-20 lg:pt-24">
             <div className="min-h-screen text-[#faba22] px-4 sm:px-8 lg:px-16 w-full max-w-[1400px] mx-auto">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-funnel text-center mb-10 text-white">
                     Community Forum

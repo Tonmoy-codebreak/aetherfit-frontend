@@ -114,7 +114,7 @@ const Newsletter = ({ user }) => {
                 </>
               ) : (
                 <>
-                  <FaPaperPlane className="text-lg" /> Subscribe Now
+                  <FaPaperPlane className="text-lg" /> <p className="font-funnel"> Subscribe Now</p>
                 </>
               )}
             </button>

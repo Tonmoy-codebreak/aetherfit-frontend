@@ -83,7 +83,7 @@ const BannerSection = () => {
               <div className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 md:px-5 py-1 md:py-2 mt-4">
                 <div className="w-2 h-2 bg-[#faba22] rounded-full animate-pulse"></div>
                 <span className="text-white text-xs md:text-sm font-medium tracking-wider uppercase">
-                  AetherFit Premium
+                  Join AetherFit 
                 </span>
               </div>
 

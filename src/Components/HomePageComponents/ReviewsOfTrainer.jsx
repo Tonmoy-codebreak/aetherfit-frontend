@@ -122,7 +122,7 @@ const ReviewsOfTrainer = () => {
                   {review.rating}/5 Rating
                 </p>
                 <p className="text-zinc-200 text-base font-light leading-relaxed tracking-wide mt-6">
-                  {review.feedback}
+                  "{review.feedback}"
                 </p>
               </div>
             </SwiperSlide>

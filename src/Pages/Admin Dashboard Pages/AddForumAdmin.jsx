@@ -26,6 +26,9 @@ const AddForumAdmin = () => {
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  // New state for form processing
+  const [isFormProcessing, setIsFormProcessing] = useState(false);
+
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -62,7 +65,7 @@ const AddForumAdmin = () => {
         const uploadRes = await axiosSecure.post(
           `${import.meta.env.VITE_API_URL}/upload-image`,
           { imageBase64: base64Image },
-          { timeout: 30000 }
+
         );
         finalImageURL = uploadRes.data.url || finalImageURL;
       }
@@ -96,6 +99,7 @@ const AddForumAdmin = () => {
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
+      setIsFormProcessing(false); // Set to false on success
     },
     onError: (err) => {
       Swal.fire({
@@ -106,6 +110,7 @@ const AddForumAdmin = () => {
         color: "#faba22",
         confirmButtonColor: "#faba22",
       });
+      setIsFormProcessing(false); // Set to false on error
     },
   });
 
@@ -169,6 +174,7 @@ const AddForumAdmin = () => {
       });
       return;
     }
+    setIsFormProcessing(true); // Set to true at the beginning of submission
     addForumMutation.mutate(newForum);
   };
 
@@ -357,12 +363,22 @@ const AddForumAdmin = () => {
 
               <button
                 type="submit"
-                disabled={addForumMutation.isLoading || !!imageSizeError} // Disable if there's an image size error
+                disabled={isFormProcessing || !!imageSizeError} // Disable if processing or image size error
                 className={`w-full py-3 bg-[#faba22] text-black rounded-xl font-bold transition-colors duration-300 ${
-                  addForumMutation.isLoading || !!imageSizeError ? 'opacity-50 cursor-not-allowed' : 'hover:bg-yellow-500'
-                }`}
+                  isFormProcessing || !!imageSizeError ? 'opacity-50 cursor-not-allowed' : 'hover:bg-yellow-500'
+                } flex items-center justify-center gap-2`} // Add flex for spinner
               >
-                {addForumMutation.isLoading ? "Submitting..." : "Post Forum"}
+                {isFormProcessing ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting (it may take a while)
+                  </>
+                ) : (
+                  'Post Forum'
+                )}
               </button>
             </form>
           </div>

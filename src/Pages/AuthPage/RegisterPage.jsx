@@ -250,7 +250,7 @@ const RegisterPage = () => {
                         disabled={loading}
                         className="w-full py-3 rounded-md text-black font-semibold bg-[#faba22] hover:bg-black hover:text-[#faba22] transition duration-300 disabled:opacity-50"
                     >
-                        {loading ? "Please wait..." : "Create Account"}
+                        {loading ? "This may take a few moments" : "Create Account"}
                     </button>
                 </form>
 

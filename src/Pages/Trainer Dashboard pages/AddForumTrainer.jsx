@@ -1,14 +1,15 @@
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router"; 
+import { useNavigate } from "react-router";
 import { useAuth } from "../../AuthProvider/useAuth";
 import useAxios from "../../hooks/useAxios";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 const AddForumTrainer = () => {
     const { user: authUser } = useAuth();
     const axiosSecure = useAxios();
     const navigate = useNavigate();
-    const queryClient = useQueryClient(); // Get query client for invalidation
+    const queryClient = useQueryClient();
 
     const [newForum, setNewForum] = useState({
         title: "",
@@ -20,19 +21,20 @@ const AddForumTrainer = () => {
     const [previewURL, setPreviewURL] = useState("");
     const [imageSize, setImageSize] = useState(null);
 
-    // TanStack Query for fetching user data
+    const [isFormProcessing, setIsFormProcessing] = useState(false);
+
     const { data: mongoUser, isLoading: isLoadingUser, isError: isUserError } = useQuery({
-        queryKey: ["currentUser", authUser?.email], // Query key with email dependency
+        queryKey: ["currentUser", authUser?.email],
         queryFn: async () => {
             if (!authUser?.email) {
-                return null; // Don't fetch if email is not available
+                return null;
             }
             const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/users?email=${authUser.email}`);
             return res.data;
         },
-        enabled: !!authUser?.email, // Only run the query if authUser.email exists
-        staleTime: Infinity, // User data typically doesn't change often
-        cacheTime: 1000 * 60 * 5, // Keep cached for 5 minutes
+        enabled: !!authUser?.email,
+        staleTime: Infinity,
+        cacheTime: 1000 * 60 * 5,
         onError: (err) => {
             console.error("Error fetching MongoDB user data:", err);
             Swal.fire({
@@ -46,27 +48,26 @@ const AddForumTrainer = () => {
         },
     });
 
-    // TanStack Query for adding a new forum post
-    const { mutate: addForumMutation, isLoading: isSubmitting } = useMutation({
+    const { mutate: addForumMutation } = useMutation({
         mutationFn: async (forumData) => {
-            // First, upload the image if a photoFile exists
-            let finalImageURL = forumData.image;
-            if (photoFile) {
-                const base64Image = await toBase64(photoFile);
+            let finalImageURL = "";
+
+            if (forumData.image) {
                 const uploadRes = await axiosSecure.post(`${import.meta.env.VITE_API_URL}/upload-image`, {
-                    imageBase64: base64Image,
+                    imageBase64: forumData.image,
                 });
                 finalImageURL = uploadRes.data.url;
+            } else {
+                throw new Error("Image data is missing or failed to process during selection.");
             }
 
-            // Then, post the forum data
             return axiosSecure.post(`${import.meta.env.VITE_API_URL}/admin/forums`, {
                 ...forumData,
                 image: finalImageURL,
             });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(["forums"]); // Invalidate forums query to refetch list if needed
+            queryClient.invalidateQueries(["forums"]);
             setNewForum({ title: "", content: "", image: "" });
             setPhotoFile(null);
             setPreviewURL("");
@@ -79,8 +80,8 @@ const AddForumTrainer = () => {
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
-            // Optional: navigate after success
-            // navigate('/dashboard/trainer/my-forums');
+            navigate('/forum');
+            setIsFormProcessing(false);
         },
         onError: (err) => {
             console.error("Forum add error:", err);
@@ -92,6 +93,7 @@ const AddForumTrainer = () => {
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
+            setIsFormProcessing(false);
         },
     });
 
@@ -99,9 +101,14 @@ const AddForumTrainer = () => {
         setNewForum({ ...newForum, [e.target.name]: e.target.value });
     };
 
-    const handlePhotoChange = (e) => {
+    const handlePhotoChange = async (e) => {
         const file = e.target.files[0];
-        const maxSize = 2 * 1024 * 1024;
+        const maxSize = 2 * 1024 * 1024; // 2MB
+
+        setPhotoFile(null);
+        setPreviewURL("");
+        setImageSize(null);
+        setNewForum(prev => ({ ...prev, image: "" }));
 
         if (file) {
             if (file.size > maxSize) {
@@ -113,19 +120,32 @@ const AddForumTrainer = () => {
                     color: "#faba22",
                     confirmButtonColor: "#faba22",
                 });
+                e.target.value = null;
+                return;
+            }
+
+            setPhotoFile(file);
+            setPreviewURL(URL.createObjectURL(file));
+            setImageSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+
+            try {
+                const base64String = await toBase64(file);
+                setNewForum(prev => ({ ...prev, image: base64String }));
+            } catch (error) {
+                console.error("Failed to convert image to Base64:", error);
+                Swal.fire({
+                    title: "Error",
+                    text: "Failed to process image for upload. Please try another one.",
+                    icon: "error",
+                    background: "black",
+                    color: "#faba22",
+                    confirmButtonColor: "#faba22",
+                });
                 setPhotoFile(null);
                 setPreviewURL("");
                 setImageSize(null);
                 e.target.value = null;
-                return;
             }
-            setPhotoFile(file);
-            setPreviewURL(URL.createObjectURL(file));
-            setImageSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
-        } else {
-            setPhotoFile(null);
-            setPreviewURL("");
-            setImageSize(null);
         }
     };
 
@@ -139,6 +159,7 @@ const AddForumTrainer = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsFormProcessing(true);
 
         if (!mongoUser?._id || !mongoUser?.email) {
             Swal.fire({
@@ -149,27 +170,28 @@ const AddForumTrainer = () => {
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
+            setIsFormProcessing(false);
             return;
         }
 
-        if (!photoFile) {
+        if (!newForum.image) {
             Swal.fire({
                 title: "Image Required",
-                text: "Please upload an image for your forum post.",
+                text: "Please upload an image for your forum post and ensure it's processed (check size/type).",
                 icon: "warning",
                 background: "black",
                 color: "#faba22",
                 confirmButtonColor: "#faba22",
             });
+            setIsFormProcessing(false);
             return;
         }
 
         const authorId = mongoUser._id;
         const authorName = authUser?.displayName || mongoUser.name || mongoUser.email;
-        const authorRole = "Trainer"; // Assuming the user is always a Trainer here
+        const authorRole = "Trainer";
         const authorEmail = mongoUser.email;
 
-        // Call the mutation function
         addForumMutation({
             ...newForum,
             authorId,
@@ -259,18 +281,18 @@ const AddForumTrainer = () => {
 
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isFormProcessing}
                         className={`w-full py-3 sm:py-4 rounded-xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1
-                        ${isSubmitting ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-[#faba22] hover:bg-yellow-500 text-black'}
+                        ${isFormProcessing ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-[#faba22] hover:bg-yellow-500 text-black'}
                         flex items-center justify-center gap-2 sm:gap-3`}
                     >
-                        {isSubmitting ? (
+                        {isFormProcessing ? (
                             <>
                                 <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Submitting...
+                                Submitting (it may take a while)
                             </>
                         ) : (
                             'Post Forum'

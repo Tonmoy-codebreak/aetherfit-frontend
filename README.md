@@ -84,6 +84,34 @@ This project uses the following dependencies to build a modern, performant front
 
 ---
 
+⚙️ How to Run This Project
+To get AetherFit running locally:
+
+Clone the repository:
+
+git clone <your-repository-url>
+
+Set up the Backend (Server):
+
+Navigate to the server directory: cd server
+
+Install dependencies: npm install
+
+Create a .env file with your MONGODB_URI, JWT_SECRET, STRIPE_SECRET_KEY, and Firebase credentials.
+
+Start the server: npm start
+
+Set up the Frontend (Client):
+
+Open a new terminal and navigate to the client directory: cd ../client
+
+Install dependencies: npm install
+
+Create a .env file with your VITE_STRIPE_PUBLISHABLE_KEY and VITE_API_BASE_URL=http://localhost:5000.
+
+Start the client: npm run dev
+
+
 ## ✅ Best Practices Followed
 
 - 🔒 Environment variables used for Firebase & MongoDB credentials  

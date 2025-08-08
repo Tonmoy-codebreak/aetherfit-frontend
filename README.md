@@ -60,18 +60,27 @@
 
 ## 📦 Dependencies
 
-The project uses the following main dependencies:
+This project uses the following dependencies to build a modern, performant frontend:
 
-- **React** – For building the user interface  
-- **React Router** – To handle navigation  
-- **Axios** – For API requests  
-- **Firebase** – Authentication and backend services  
-- **Stripe & React Stripe.js** – Payment processing  
-- **Tailwind CSS** – Utility-first CSS framework  
-- **Recharts** – Data visualization charts  
-- **Swiper** – Responsive sliders/carousels  
-- **SweetAlert2** – Beautiful alert modals  
-
+### Main Dependencies
+- `@headlessui/react` — Accessible UI components  
+- `@stripe/react-stripe-js` & `@stripe/stripe-js` — Stripe payment integration  
+- `@tailwindcss/vite` — Tailwind CSS plugin for Vite  
+- `@tanstack/react-query` — Data fetching and caching  
+- `axios` — HTTP client for API calls  
+- `browser-image-compression` — Client-side image compression  
+- `firebase` — Firebase services including authentication  
+- `jsonwebtoken` — JSON Web Token implementation  
+- `react` & `react-dom` — Core React libraries  
+- `react-icons` — Icon components  
+- `react-rating`, `react-simple-star-rating`, `react-star-ratings` — Star rating components  
+- `react-router` — Routing library for React  
+- `react-select` — Select input component  
+- `recharts` — Charting library for React  
+- `stripe` — Stripe API library  
+- `sweetalert2` & `sweetalert2-react-content` — Beautiful alerts and modals  
+- `swiper` — Modern slider/carousel library  
+- `tailwindcss` — Utility-first CSS framework  
 
 ---
 

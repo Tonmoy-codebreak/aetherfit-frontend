@@ -11,7 +11,7 @@ const ClassDetailsModal = ({ classItem, onClose }) => {
     if (!classItem) return null; // Don't render if no class item is provided
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 font-sans">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 font-sans overflow-hidden">
             <div className="bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
                 {/* Close Button */}
                 <button
@@ -120,13 +120,13 @@ const AllClassesPage = () => {
             </h1>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="mb-12 flex justify-center max-w-lg mx-auto">
+            <form onSubmit={handleSearchSubmit} className="mb-12 flex justify-center border-amber-400 border-4 max-w-xm  md:max-w-lg mx-auto">
                 <input
                     type="text"
                     value={searchInput}
                     onChange={handleSearchChange}
-                    placeholder="Search classes by name..."
-                    className="flex-grow px-5 py-3 rounded-l-full bg-zinc-800 text-white placeholder-zinc-500
+                    placeholder="Search classes "
+                    className="flex-grow px-2 md:px-5 py-3 rounded-l-full bg-zinc-800 text-white placeholder-zinc-500
                                 focus:outline-none focus:ring-2 focus:ring-[#faba22] border border-zinc-700 text-lg"
                 />
                 <button

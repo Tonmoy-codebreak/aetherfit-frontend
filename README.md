@@ -57,6 +57,22 @@
 
 
 
+
+## 📦 Dependencies
+
+The project uses the following main dependencies:
+
+- **React** – For building the user interface  
+- **React Router** – To handle navigation  
+- **Axios** – For API requests  
+- **Firebase** – Authentication and backend services  
+- **Stripe & React Stripe.js** – Payment processing  
+- **Tailwind CSS** – Utility-first CSS framework  
+- **Recharts** – Data visualization charts  
+- **Swiper** – Responsive sliders/carousels  
+- **SweetAlert2** – Beautiful alert modals  
+
+
 ---
 
 ## ✅ Best Practices Followed

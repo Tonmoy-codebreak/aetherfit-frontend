@@ -57,7 +57,60 @@
 
 
 
+
+## 📦 Dependencies
+
+This project uses the following dependencies to build a modern, performant frontend:
+
+### Main Dependencies
+- `@headlessui/react` — Accessible UI components  
+- `@stripe/react-stripe-js` & `@stripe/stripe-js` — Stripe payment integration  
+- `@tailwindcss/vite` — Tailwind CSS plugin for Vite  
+- `@tanstack/react-query` — Data fetching and caching  
+- `axios` — HTTP client for API calls  
+- `browser-image-compression` — Client-side image compression  
+- `firebase` — Firebase services including authentication  
+- `jsonwebtoken` — JSON Web Token implementation  
+- `react` & `react-dom` — Core React libraries  
+- `react-icons` — Icon components  
+- `react-rating`, `react-simple-star-rating`, `react-star-ratings` — Star rating components  
+- `react-router` — Routing library for React  
+- `react-select` — Select input component  
+- `recharts` — Charting library for React  
+- `stripe` — Stripe API library  
+- `sweetalert2` & `sweetalert2-react-content` — Beautiful alerts and modals  
+- `swiper` — Modern slider/carousel library  
+- `tailwindcss` — Utility-first CSS framework  
+
 ---
+
+⚙️ How to Run This Project
+To get AetherFit running locally:
+
+Clone the repository:
+
+git clone <your-repository-url>
+
+Set up the Backend (Server):
+
+Navigate to the server directory: cd server
+
+Install dependencies: npm install
+
+Create a .env file with your MONGODB_URI, JWT_SECRET, STRIPE_SECRET_KEY, and Firebase credentials.
+
+Start the server: npm start
+
+Set up the Frontend (Client):
+
+Open a new terminal and navigate to the client directory: cd ../client
+
+Install dependencies: npm install
+
+Create a .env file with your VITE_STRIPE_PUBLISHABLE_KEY and VITE_API_BASE_URL=http://localhost:5000.
+
+Start the client: npm run dev
+
 
 ## ✅ Best Practices Followed
 

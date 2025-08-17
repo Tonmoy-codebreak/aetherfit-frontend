@@ -143,7 +143,7 @@ const FeaturedClass = () => {
                                 />
 
                                 {/* Floating Badge / Class Title */}
-                                <div className="absolute -bottom-6 left-4 bg-[#faba22] text-black px-5 py-2 rounded-full shadow-lg font-funnel text-lg font-semibold z-10">
+                                <div className="absolute -bottom-6 left-4 bg-[#faba22] text-black text-sm px-5 py-2 rounded-full shadow-lg font-funnel  font-semibold z-10">
                                     {classItem.name}
                                 </div>
                             </div>

@@ -120,7 +120,7 @@ const AllClassesPage = () => {
             </h1>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="mb-12 flex justify-center border-amber-400 border-4 max-w-xm  md:max-w-lg mx-auto">
+            <form onSubmit={handleSearchSubmit} className="mb-12 flex justify-center border-amber-400 border-4 max  md:max-w-lg mx-auto">
                 <input
                     type="text"
                     value={searchInput}

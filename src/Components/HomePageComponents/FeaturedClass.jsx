@@ -120,7 +120,7 @@ const FeaturedClass = () => {
     return (
         <section className="bg-zinc-950 py-32 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 font-funnel drop-shadow-lg">
+                <h2 className="text-4xl md:text-5xl font-bold text-[#faba22] text-center mb-12 py-10 font-funnel drop-shadow-lg">
                     Featured Classes
                 </h2>
 

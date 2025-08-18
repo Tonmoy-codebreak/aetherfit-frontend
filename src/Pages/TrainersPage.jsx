@@ -38,7 +38,7 @@ const AllTrainersPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-[#faba22] p-6 md:p-10 lg:p-16">
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-12 font-funnel pt-10 text-white tracking-wide">
+      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-12 font-funnel pt-20 md:py-20 text-white tracking-wide">
         Meet Our <span className="text-[#faba22]">Elite Trainers</span>
       </h1>
       <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
